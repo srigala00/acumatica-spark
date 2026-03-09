@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Upload } from 'lucide-react';
+import { Plus, Pencil, Upload, Download, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import * as XLSX from 'xlsx';
 
@@ -37,6 +39,8 @@ const AdminProducts = () => {
   const [importData, setImportData] = useState<ProductRow[]>([]);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -53,6 +57,20 @@ const AdminProducts = () => {
       return data || [];
     },
   });
+
+  const allSelected = useMemo(() => {
+    if (!products?.length) return false;
+    return products.every(p => selectedIds.includes(p.id));
+  }, [products, selectedIds]);
+
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds([]);
+    else setSelectedIds(products?.map(p => p.id) || []);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   const [form, setForm] = useState({
     sku: '', name: '', brand: '', category_id: '', description: '', estimated_price: '', is_active: true,
@@ -97,6 +115,26 @@ const AdminProducts = () => {
     onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
+  const deleteSelected = async () => {
+    try {
+      const { error } = await supabase.from('products').delete().in('id', selectedIds);
+      if (error) throw error;
+      toast({ title: 'Products deleted', description: `${selectedIds.length} product(s) removed` });
+      setSelectedIds([]);
+      setDeleteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([['sku', 'name', 'brand', 'category', 'description', 'estimated_price']]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Products');
+    XLSX.writeFile(wb, 'product_import_template.xlsx');
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -132,7 +170,6 @@ const AdminProducts = () => {
       estimated_price: r.estimated_price ? parseFloat(r.estimated_price) : null,
     })).filter(r => r.sku && r.name);
 
-    // Batch insert in chunks of 50
     let success = 0;
     let errors = 0;
     const chunkSize = 50;
@@ -211,11 +248,23 @@ const AdminProducts = () => {
           </div>
         </div>
 
+        {selectedIds.length > 0 && (
+          <div className="flex items-center gap-4 rounded-lg border bg-muted/50 p-3">
+            <span className="text-sm font-medium">{selectedIds.length} product(s) selected</span>
+            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+            </Button>
+          </div>
+        )}
+
         <Card>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                  </TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Brand</TableHead>
@@ -228,6 +277,9 @@ const AdminProducts = () => {
               <TableBody>
                 {products?.map(p => (
                   <TableRow key={p.id}>
+                    <TableCell>
+                      <Checkbox checked={selectedIds.includes(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{p.brand}</TableCell>
@@ -250,6 +302,20 @@ const AdminProducts = () => {
           </CardContent>
         </Card>
 
+        {/* Delete Confirmation */}
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedIds.length} product(s)?</AlertDialogTitle>
+              <AlertDialogDescription>This action cannot be undone. The selected products will be permanently removed.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={deleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Import Dialog */}
         <Dialog open={importOpen} onOpenChange={(o) => { if (!importing) { setImportOpen(o); if (!o) setImportData([]); } }}>
           <DialogContent className="max-w-2xl">
@@ -258,7 +324,12 @@ const AdminProducts = () => {
               <DialogDescription>Upload an Excel file with columns: sku, name, brand, category, description, estimated_price</DialogDescription>
             </DialogHeader>
             {importData.length === 0 ? (
-              <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+              <div className="space-y-4">
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Download className="mr-2 h-4 w-4" /> Download Template
+                </Button>
+                <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+              </div>
             ) : (
               <div className="space-y-4">
                 <div className="max-h-64 overflow-auto rounded border">
