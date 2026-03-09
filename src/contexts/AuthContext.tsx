@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
-  const isAdmin = hasRole('admin') || hasRole('super_admin');
+  const isAdmin = hasRole('sales') || hasRole('super_admin');
 
   return (
     <AuthContext.Provider value={{ session, user, roles, profile, loading, signOut, hasRole, isAdmin }}>
