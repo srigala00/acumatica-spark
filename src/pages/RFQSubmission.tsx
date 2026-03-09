@@ -1,0 +1,231 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import PublicLayout from '@/components/layout/PublicLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Trash2, Send } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+interface LineItem {
+  product_id: string;
+  product_name: string;
+  sku: string;
+  quantity: number;
+  specification: string;
+}
+
+const RFQSubmission = () => {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const preselectedProductId = searchParams.get('product');
+
+  const [form, setForm] = useState({
+    companyName: '',
+    contactPerson: profile?.full_name || '',
+    email: user?.email || '',
+    phone: profile?.phone || '',
+    description: '',
+  });
+
+  const [items, setItems] = useState<LineItem[]>([
+    { product_id: '', product_name: '', sku: '', quantity: 1, specification: '' },
+  ]);
+  const [loading, setLoading] = useState(false);
+
+  const { data: products } = useQuery({
+    queryKey: ['all-products'],
+    queryFn: async () => {
+      const { data } = await supabase.from('products').select('id, name, sku').eq('is_active', true).order('name');
+      return data || [];
+    },
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setForm(prev => ({ ...prev, contactPerson: profile.full_name, phone: profile.phone || '' }));
+    }
+    if (user) {
+      setForm(prev => ({ ...prev, email: user.email || '' }));
+    }
+  }, [profile, user]);
+
+  useEffect(() => {
+    if (preselectedProductId && products) {
+      const p = products.find(pr => pr.id === preselectedProductId);
+      if (p) {
+        setItems([{ product_id: p.id, product_name: p.name, sku: p.sku, quantity: 1, specification: '' }]);
+      }
+    }
+  }, [preselectedProductId, products]);
+
+  const addItem = () => setItems([...items, { product_id: '', product_name: '', sku: '', quantity: 1, specification: '' }]);
+  const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx));
+
+  const updateItem = (idx: number, field: keyof LineItem, value: string | number) => {
+    setItems(items.map((item, i) => {
+      if (i !== idx) return item;
+      if (field === 'product_id') {
+        const p = products?.find(pr => pr.id === value);
+        return { ...item, product_id: value as string, product_name: p?.name || '', sku: p?.sku || '' };
+      }
+      return { ...item, [field]: value };
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (items.length === 0 || items.every(i => !i.product_name)) {
+      toast({ title: 'Error', description: 'Please add at least one product', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+
+    // Create request
+    const { data: request, error: reqErr } = await supabase
+      .from('requests')
+      .insert({
+        user_id: user!.id,
+        company_name: form.companyName,
+        contact_person: form.contactPerson,
+        email: form.email,
+        phone: form.phone,
+        description: form.description,
+      })
+      .select()
+      .single();
+
+    if (reqErr || !request) {
+      toast({ title: 'Error', description: reqErr?.message || 'Failed to create request', variant: 'destructive' });
+      setLoading(false);
+      return;
+    }
+
+    // Create items
+    const itemsToInsert = items.filter(i => i.product_name).map(i => ({
+      request_id: request.id,
+      product_id: i.product_id || null,
+      product_name: i.product_name,
+      sku: i.sku || null,
+      quantity: i.quantity,
+      specification: i.specification || null,
+    }));
+
+    await supabase.from('request_items').insert(itemsToInsert);
+
+    setLoading(false);
+    toast({ title: 'Request Submitted!', description: `Your RFQ ${request.request_number} has been submitted successfully.` });
+    navigate('/requests');
+  };
+
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
+
+  return (
+    <PublicLayout>
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 className="font-display text-3xl font-bold mb-2">Submit Request for Quotation</h1>
+        <p className="text-muted-foreground mb-8">Fill in the details below to request a quotation for industrial spare parts.</p>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Company Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Company Name *</Label>
+                  <Input required value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Contact Person *</Label>
+                  <Input required value={form.contactPerson} onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Description / Notes</Label>
+                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Any additional requirements or notes..." />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Requested Products</CardTitle>
+              <CardDescription>Add the products you need a quotation for</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {items.map((item, idx) => (
+                <div key={idx} className="p-4 border border-border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Item {idx + 1}</span>
+                    {items.length > 1 && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Product</Label>
+                      <Select value={item.product_id} onValueChange={(v) => updateItem(idx, 'product_id', v)}>
+                        <SelectTrigger><SelectValue placeholder="Select or type custom" /></SelectTrigger>
+                        <SelectContent>
+                          {products?.map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Product Name *</Label>
+                      <Input value={item.product_name} onChange={(e) => updateItem(idx, 'product_name', e.target.value)} placeholder="Or type custom product name" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">SKU</Label>
+                      <Input value={item.sku} onChange={(e) => updateItem(idx, 'sku', e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Quantity *</Label>
+                      <Input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', parseInt(e.target.value) || 1)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Specification / Notes</Label>
+                    <Input value={item.specification} onChange={(e) => updateItem(idx, 'specification', e.target.value)} placeholder="Size, material, or other requirements" />
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={addItem} className="w-full">
+                <Plus className="h-4 w-4 mr-2" /> Add Another Item
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            <Send className="h-4 w-4 mr-2" /> {loading ? 'Submitting...' : 'Submit Request'}
+          </Button>
+        </form>
+      </div>
+    </PublicLayout>
+  );
+};
+
+export default RFQSubmission;
