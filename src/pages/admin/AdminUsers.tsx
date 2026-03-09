@@ -9,8 +9,12 @@ const AdminUsers = () => {
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from('profiles').select('*, user_roles(role)').order('created_at', { ascending: false });
-      return profiles || [];
+      const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+      const { data: roles } = await supabase.from('user_roles').select('*');
+      return (profiles || []).map(p => ({
+        ...p,
+        roles: (roles || []).filter(r => r.user_id === p.user_id).map(r => r.role),
+      }));
     },
   });
 
