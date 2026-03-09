@@ -46,8 +46,8 @@ const AdminUsers = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {(u.user_roles as any[])?.map((r: any) => (
-                        <Badge key={r.role} variant="outline" className="mr-1">{r.role}</Badge>
+                      {u.roles?.map((r: string) => (
+                        <Badge key={r} variant="outline" className="mr-1">{r}</Badge>
                       ))}
                     </TableCell>
                     <TableCell className="text-sm">{new Date(u.created_at).toLocaleDateString('id-ID')}</TableCell>
