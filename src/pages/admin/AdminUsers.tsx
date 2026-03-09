@@ -8,13 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, MoreHorizontal, Upload, Trash2 } from 'lucide-react';
+import { Plus, Upload, Trash2, Download, Save } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import * as XLSX from 'xlsx';
 
@@ -38,6 +37,8 @@ const AdminUsers = () => {
   const [importData, setImportData] = useState<UserRow[]>([]);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  const [pendingStatus, setPendingStatus] = useState<Map<string, string>>(new Map());
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
@@ -57,11 +58,8 @@ const AdminUsers = () => {
   }, [users, selectedIds]);
 
   const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(users?.map(u => u.user_id) || []);
-    }
+    if (allSelected) setSelectedIds([]);
+    else setSelectedIds(users?.map(u => u.user_id) || []);
   };
 
   const toggleSelect = (userId: string) => {
@@ -91,17 +89,41 @@ const AdminUsers = () => {
     }
   };
 
-  const updateStatus = async (userId: string, status: string) => {
-    try {
-      const res = await supabase.functions.invoke('manage-user', {
-        body: { action: 'update_status', user_id: userId, status },
-      });
-      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message);
-      toast({ title: 'Status updated' });
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+  const getDisplayStatus = (user: any) => {
+    return pendingStatus.get(user.user_id) || user.status;
+  };
+
+  const handleStatusChange = (userId: string, newStatus: string, currentStatus: string) => {
+    if (newStatus === currentStatus) {
+      setPendingStatus(prev => { const m = new Map(prev); m.delete(userId); return m; });
+    } else {
+      setPendingStatus(prev => new Map(prev).set(userId, newStatus));
     }
+  };
+
+  const saveStatusChanges = async () => {
+    setSavingStatus(true);
+    let success = 0;
+    let errors = 0;
+    for (const [userId, status] of pendingStatus) {
+      try {
+        const res = await supabase.functions.invoke('manage-user', {
+          body: { action: 'update_status', user_id: userId, status },
+        });
+        if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message);
+        success++;
+      } catch {
+        errors++;
+      }
+    }
+    if (errors > 0) {
+      toast({ title: 'Partial success', description: `${success} updated, ${errors} failed`, variant: 'destructive' });
+    } else {
+      toast({ title: 'Status updated', description: `${success} user(s) updated` });
+    }
+    setPendingStatus(new Map());
+    setSavingStatus(false);
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] });
   };
 
   const deleteSelected = async () => {
@@ -121,6 +143,13 @@ const AdminUsers = () => {
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
+  };
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role']]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Users');
+    XLSX.writeFile(wb, 'user_import_template.xlsx');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,12 +259,26 @@ const AdminUsers = () => {
           </div>
         </div>
 
-        {selectedIds.length > 0 && (
+        {/* Action bars */}
+        {(selectedIds.length > 0 || pendingStatus.size > 0) && (
           <div className="flex items-center gap-4 rounded-lg border bg-muted/50 p-3">
-            <span className="text-sm font-medium">{selectedIds.length} user(s) selected</span>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
-            </Button>
+            {selectedIds.length > 0 && (
+              <>
+                <span className="text-sm font-medium">{selectedIds.length} user(s) selected</span>
+                <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                </Button>
+              </>
+            )}
+            {pendingStatus.size > 0 && (
+              <>
+                {selectedIds.length > 0 && <div className="h-4 w-px bg-border" />}
+                <span className="text-sm font-medium">{pendingStatus.size} status change(s) pending</span>
+                <Button size="sm" onClick={saveStatusChanges} disabled={savingStatus}>
+                  <Save className="mr-2 h-4 w-4" /> {savingStatus ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </>
+            )}
           </div>
         )}
 
@@ -252,39 +295,39 @@ const AdminUsers = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
-                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users?.map(u => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <Checkbox checked={selectedIds.includes(u.user_id)} onCheckedChange={() => toggleSelect(u.user_id)} />
-                    </TableCell>
-                    <TableCell className="font-medium">{u.full_name}</TableCell>
-                    <TableCell>{u.phone || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={u.status === 'active' ? 'default' : 'secondary'}>{u.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {u.roles?.map((r: string) => (
-                        <Badge key={r} variant={roleBadgeVariant(r)} className="mr-1">{r}</Badge>
-                      ))}
-                    </TableCell>
-                    <TableCell className="text-sm">{new Date(u.created_at).toLocaleDateString('id-ID')}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => updateStatus(u.user_id, 'active')}>Set Active</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateStatus(u.user_id, 'inactive')}>Set Inactive</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {users?.map(u => {
+                  const displayStatus = getDisplayStatus(u);
+                  const isPending = pendingStatus.has(u.user_id);
+                  return (
+                    <TableRow key={u.id} className={isPending ? 'bg-accent/30' : ''}>
+                      <TableCell>
+                        <Checkbox checked={selectedIds.includes(u.user_id)} onCheckedChange={() => toggleSelect(u.user_id)} />
+                      </TableCell>
+                      <TableCell className="font-medium">{u.full_name}</TableCell>
+                      <TableCell>{u.phone || '-'}</TableCell>
+                      <TableCell>
+                        <Select value={displayStatus} onValueChange={(v) => handleStatusChange(u.user_id, v, u.status)}>
+                          <SelectTrigger className="w-28 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        {u.roles?.map((r: string) => (
+                          <Badge key={r} variant={roleBadgeVariant(r)} className="mr-1">{r}</Badge>
+                        ))}
+                      </TableCell>
+                      <TableCell className="text-sm">{new Date(u.created_at).toLocaleDateString('id-ID')}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -313,6 +356,9 @@ const AdminUsers = () => {
             </DialogHeader>
             {importData.length === 0 ? (
               <div className="space-y-4">
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Download className="mr-2 h-4 w-4" /> Download Template
+                </Button>
                 <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
               </div>
             ) : (
