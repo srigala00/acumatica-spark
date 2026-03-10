@@ -118,10 +118,10 @@ const Products = () => {
               {brands.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium mb-2">Brand</h4>
-                  <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                  <Select value={selectedBrand || "all"} onValueChange={(v) => setSelectedBrand(v === "all" ? "" : v)}>
                     <SelectTrigger><SelectValue placeholder="All brands" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All brands</SelectItem>
+                      <SelectItem value="all">All brands</SelectItem>
                       {brands.map(b => <SelectItem key={b} value={b!}>{b}</SelectItem>)}
                     </SelectContent>
                   </Select>
