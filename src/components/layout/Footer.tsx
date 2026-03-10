@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -10,7 +10,6 @@ const Footer = () => {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-display font-bold text-sm">SP</span>
               </div>
-              <span className="font-display font-bold text-lg">SpareParts.mart</span>
             </div>
             <p className="text-sm opacity-70">
               Your trusted B2B marketplace for industrial spare parts and equipment procurement.
@@ -20,20 +19,52 @@ const Footer = () => {
           <div>
             <h4 className="font-display font-semibold mb-4">Products</h4>
             <ul className="space-y-2 text-sm opacity-70">
-              <li><Link to="/products?category=boiler-parts" className="hover:opacity-100">Boiler Parts</Link></li>
-              <li><Link to="/products?category=generator-parts" className="hover:opacity-100">Generator Parts</Link></li>
-              <li><Link to="/products?category=turbine-parts" className="hover:opacity-100">Turbine Parts</Link></li>
-              <li><Link to="/products?category=pumps-compressors" className="hover:opacity-100">Pumps & Compressors</Link></li>
+              <li>
+                <Link to="/products?category=boiler-parts" className="hover:opacity-100">
+                  Boiler Parts
+                </Link>
+              </li>
+              <li>
+                <Link to="/products?category=generator-parts" className="hover:opacity-100">
+                  Generator Parts
+                </Link>
+              </li>
+              <li>
+                <Link to="/products?category=turbine-parts" className="hover:opacity-100">
+                  Turbine Parts
+                </Link>
+              </li>
+              <li>
+                <Link to="/products?category=pumps-compressors" className="hover:opacity-100">
+                  Pumps & Compressors
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-display font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm opacity-70">
-              <li><Link to="/about" className="hover:opacity-100">About Us</Link></li>
-              <li><Link to="/contact" className="hover:opacity-100">Contact</Link></li>
-              <li><Link to="/terms" className="hover:opacity-100">Terms of Service</Link></li>
-              <li><Link to="/privacy" className="hover:opacity-100">Privacy Policy</Link></li>
+              <li>
+                <Link to="/about" className="hover:opacity-100">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:opacity-100">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:opacity-100">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:opacity-100">
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
