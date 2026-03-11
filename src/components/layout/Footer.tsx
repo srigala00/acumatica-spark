@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <div className="mb-4">
+            <div className="mb-4 bg-background rounded-lg p-2 inline-block">
               <img src="/logo_pln.png" alt="PLN Suku Cadang" className="h-10 w-auto" />
             </div>
             <p className="text-sm opacity-70">
