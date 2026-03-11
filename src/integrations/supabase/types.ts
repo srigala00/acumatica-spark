@@ -151,6 +151,7 @@ export type Database = {
           estimated_price: number | null
           id: string
           image_url: string | null
+          inventory_id: string | null
           is_active: boolean
           name: string
           sku: string
@@ -166,6 +167,7 @@ export type Database = {
           estimated_price?: number | null
           id?: string
           image_url?: string | null
+          inventory_id?: string | null
           is_active?: boolean
           name: string
           sku: string
@@ -181,6 +183,7 @@ export type Database = {
           estimated_price?: number | null
           id?: string
           image_url?: string | null
+          inventory_id?: string | null
           is_active?: boolean
           name?: string
           sku?: string
@@ -201,10 +204,12 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          business_account: string | null
           company_id: string | null
           created_at: string
           full_name: string
           id: string
+          location: string | null
           phone: string | null
           status: string
           updated_at: string
@@ -212,10 +217,12 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          business_account?: string | null
           company_id?: string | null
           created_at?: string
           full_name: string
           id?: string
+          location?: string | null
           phone?: string | null
           status?: string
           updated_at?: string
@@ -223,10 +230,12 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          business_account?: string | null
           company_id?: string | null
           created_at?: string
           full_name?: string
           id?: string
+          location?: string | null
           phone?: string | null
           status?: string
           updated_at?: string
