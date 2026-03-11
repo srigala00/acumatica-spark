@@ -48,10 +48,10 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", callerId)
-      .eq("role", "super_admin");
+      .in("role", ["super_admin", "sales"]);
 
     if (!callerRoles || callerRoles.length === 0) {
-      return new Response(JSON.stringify({ error: "Forbidden: super_admin required" }), {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
