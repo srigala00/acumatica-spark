@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Upload, Trash2, Download, Save } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Plus, Upload, Trash2, Download, Save, Pencil } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import * as XLSX from 'xlsx';
 
@@ -29,6 +30,8 @@ interface UserRow {
 
 const AdminUsers = () => {
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('super_admin');
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,6 +44,12 @@ const AdminUsers = () => {
   const [importProgress, setImportProgress] = useState(0);
   const [pendingStatus, setPendingStatus] = useState<Map<string, string>>(new Map());
   const [savingStatus, setSavingStatus] = useState(false);
+
+  // Edit state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editUser, setEditUser] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', role: '', email: '' });
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
@@ -92,6 +101,54 @@ const AdminUsers = () => {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openEditDialog = (user: any) => {
+    setEditUser(user);
+    setEditForm({
+      full_name: user.full_name || '',
+      phone: user.phone || '',
+      business_account: user.business_account || '',
+      location: user.location || '',
+      role: user.roles?.[0] || 'buyer',
+      email: '', // not shown unless super_admin
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUser) return;
+    setEditLoading(true);
+    try {
+      const body: any = {
+        action: 'update_profile',
+        user_id: editUser.user_id,
+        full_name: editForm.full_name,
+        phone: editForm.phone || null,
+        business_account: editForm.business_account || null,
+        location: editForm.location || null,
+      };
+      // Only super_admin can change role and email
+      if (isSuperAdmin) {
+        if (editForm.role && editForm.role !== editUser.roles?.[0]) {
+          body.role = editForm.role;
+        }
+        if (editForm.email) {
+          body.email = editForm.email;
+        }
+      }
+      const res = await supabase.functions.invoke('manage-user', { body });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
+      toast({ title: 'Success', description: 'User updated successfully' });
+      setEditOpen(false);
+      setEditUser(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -314,6 +371,7 @@ const AdminUsers = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -327,8 +385,8 @@ const AdminUsers = () => {
                       </TableCell>
                       <TableCell className="font-medium">{u.full_name}</TableCell>
                       <TableCell>{u.phone || '-'}</TableCell>
-                      <TableCell className="text-sm">{(u as any).business_account || '-'}</TableCell>
-                      <TableCell className="text-sm">{(u as any).location || '-'}</TableCell>
+                      <TableCell className="text-sm">{u.business_account || '-'}</TableCell>
+                      <TableCell className="text-sm">{u.location || '-'}</TableCell>
                       <TableCell>
                         <Select value={displayStatus} onValueChange={(v) => handleStatusChange(u.user_id, v, u.status)}>
                           <SelectTrigger className="w-28 h-8">
@@ -346,6 +404,11 @@ const AdminUsers = () => {
                         ))}
                       </TableCell>
                       <TableCell className="text-sm">{new Date(u.created_at).toLocaleDateString('id-ID')}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(u)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -353,6 +416,56 @@ const AdminUsers = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Edit User Dialog */}
+        <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setEditUser(null); }}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>Update user information.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Full Name *</Label>
+                <Input value={editForm.full_name} onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Business Account</Label>
+                <Input value={editForm.business_account} onChange={e => setEditForm(f => ({ ...f, business_account: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Input value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
+              </div>
+              {isSuperAdmin && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select value={editForm.role} onValueChange={v => setEditForm(f => ({ ...f, role: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="buyer">Buyer</SelectItem>
+                        <SelectItem value="sales">Sales</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Change Email (leave blank to keep current)</Label>
+                    <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="New email address" />
+                  </div>
+                </>
+              )}
+              <Button type="submit" className="w-full" disabled={editLoading}>
+                {editLoading ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
