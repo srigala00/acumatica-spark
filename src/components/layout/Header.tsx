@@ -43,16 +43,8 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20 gap-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <div className="w-10 h-10 rounded-lg bg-[hsl(48,100%,50%)] flex items-center justify-center">
-                <span className="text-[hsl(187,100%,22%)] font-display font-bold text-lg">⚡</span>
-              </div>
-              <div className="leading-tight">
-                <span className="font-display font-bold text-lg tracking-wide text-primary block">P L N</span>
-                <span className="font-display font-semibold text-xs text-primary">Suku Cadang</span>
-              </div>
-            </div>
+          <Link to="/" className="shrink-0">
+            <img src="/logo_pln.png" alt="PLN Suku Cadang" className="h-12 w-auto" />
           </Link>
 
           {/* Search */}

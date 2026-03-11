@@ -6,14 +6,8 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(48,100%,50%)] flex items-center justify-center">
-                <span className="text-[hsl(187,100%,22%)] font-display font-bold text-sm">⚡</span>
-              </div>
-              <div className="leading-tight">
-                <span className="font-display font-bold text-sm text-primary">PLN</span>
-                <span className="font-display text-xs text-primary block">Suku Cadang</span>
-              </div>
+            <div className="mb-4">
+              <img src="/logo_pln.png" alt="PLN Suku Cadang" className="h-10 w-auto" />
             </div>
             <p className="text-sm opacity-70">
               Your trusted B2B marketplace for industrial spare parts and equipment procurement.
