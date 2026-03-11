@@ -30,11 +30,8 @@ const AdminSidebar = () => {
         <SidebarGroup>
           <SidebarGroupLabel>
             {!collapsed && (
-              <div className="flex items-center gap-2 py-2">
-                <div className="w-7 h-7 rounded bg-[hsl(48,100%,50%)] flex items-center justify-center">
-                  <span className="text-[hsl(187,100%,22%)] font-display font-bold text-xs">⚡</span>
-                </div>
-                <span className="font-display font-semibold text-sm">PLN Admin</span>
+              <div className="py-2">
+                <img src="/logo_pln.png" alt="PLN Admin" className="h-8 w-auto" />
               </div>
             )}
           </SidebarGroupLabel>
