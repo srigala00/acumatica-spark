@@ -42,21 +42,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check caller is super_admin
+    // Check caller is super_admin or sales
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", callerId)
-      .eq("role", "super_admin");
+      .in("role", ["super_admin", "sales"]);
 
     if (!callerRoles || callerRoles.length === 0) {
-      return new Response(JSON.stringify({ error: "Forbidden: super_admin required" }), {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { action, user_id, user_ids, status } = await req.json();
+    const callerIsSuperAdmin = callerRoles.some((r: any) => r.role === "super_admin");
+    const body = await req.json();
+    const { action, user_id, user_ids, status } = body;
 
     if (action === "update_status") {
       if (!user_id || !status || !["active", "inactive"].includes(status)) {
@@ -78,7 +80,80 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "update_profile") {
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { full_name, phone, business_account, location, role, email } = body;
+
+      // Update profile fields
+      const profileUpdate: Record<string, any> = {};
+      if (full_name !== undefined) profileUpdate.full_name = full_name;
+      if (phone !== undefined) profileUpdate.phone = phone;
+      if (business_account !== undefined) profileUpdate.business_account = business_account;
+      if (location !== undefined) profileUpdate.location = location;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error } = await adminClient
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("user_id", user_id);
+        if (error) throw error;
+      }
+
+      // Update role if provided (super_admin only)
+      if (role) {
+        if (!callerIsSuperAdmin) {
+          return new Response(JSON.stringify({ error: "Only super_admin can change roles" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const allowedRoles = ["buyer", "sales", "super_admin"];
+        if (!allowedRoles.includes(role)) {
+          return new Response(JSON.stringify({ error: "Invalid role" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Delete existing roles, insert new one
+        await adminClient.from("user_roles").delete().eq("user_id", user_id);
+        const { error: roleError } = await adminClient
+          .from("user_roles")
+          .insert({ user_id, role });
+        if (roleError) throw roleError;
+      }
+
+      // Update email if provided (super_admin only)
+      if (email) {
+        if (!callerIsSuperAdmin) {
+          return new Response(JSON.stringify({ error: "Only super_admin can change email" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error: emailError } = await adminClient.auth.admin.updateUserById(user_id, { email });
+        if (emailError) throw emailError;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "delete") {
+      if (!callerIsSuperAdmin) {
+        return new Response(JSON.stringify({ error: "Only super_admin can delete users" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const ids = user_ids || (user_id ? [user_id] : []);
       if (!ids.length) {
         return new Response(JSON.stringify({ error: "No user IDs provided" }), {
@@ -87,7 +162,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Prevent deleting self
       if (ids.includes(callerId)) {
         return new Response(JSON.stringify({ error: "Cannot delete yourself" }), {
           status: 400,
