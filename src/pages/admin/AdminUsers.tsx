@@ -440,24 +440,22 @@ const AdminUsers = () => {
                 <Label>Location</Label>
                 <Input value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
               </div>
+              <div className="space-y-2">
+                <Label>Change Email (leave blank to keep current)</Label>
+                <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="New email address" />
+              </div>
               {isSuperAdmin && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <Select value={editForm.role} onValueChange={v => setEditForm(f => ({ ...f, role: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="buyer">Buyer</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="super_admin">Super Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Change Email (leave blank to keep current)</Label>
-                    <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="New email address" />
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select value={editForm.role} onValueChange={v => setEditForm(f => ({ ...f, role: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="buyer">Buyer</SelectItem>
+                      <SelectItem value="sales">Sales</SelectItem>
+                      <SelectItem value="super_admin">Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
               <Button type="submit" className="w-full" disabled={editLoading}>
                 {editLoading ? 'Saving...' : 'Save Changes'}

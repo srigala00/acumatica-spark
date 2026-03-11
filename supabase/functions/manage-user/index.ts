@@ -129,14 +129,8 @@ Deno.serve(async (req) => {
         if (roleError) throw roleError;
       }
 
-      // Update email if provided (super_admin only)
+      // Update email if provided (super_admin and sales can do this)
       if (email) {
-        if (!callerIsSuperAdmin) {
-          return new Response(JSON.stringify({ error: "Only super_admin can change email" }), {
-            status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
         const { error: emailError } = await adminClient.auth.admin.updateUserById(user_id, { email });
         if (emailError) throw emailError;
       }
