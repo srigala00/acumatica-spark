@@ -130,14 +130,13 @@ const AdminUsers = () => {
         business_account: editForm.business_account || null,
         location: editForm.location || null,
       };
-      // Only super_admin can change role and email
-      if (isSuperAdmin) {
-        if (editForm.role && editForm.role !== editUser.roles?.[0]) {
-          body.role = editForm.role;
-        }
-        if (editForm.email) {
-          body.email = editForm.email;
-        }
+      // Only super_admin can change role
+      if (isSuperAdmin && editForm.role && editForm.role !== editUser.roles?.[0]) {
+        body.role = editForm.role;
+      }
+      // Both super_admin and sales can change email
+      if (editForm.email) {
+        body.email = editForm.email;
       }
       const res = await supabase.functions.invoke('manage-user', { body });
       if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
