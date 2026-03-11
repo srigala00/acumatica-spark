@@ -15,12 +15,12 @@ const statusColors: Record<string, string> = {
   closed: 'bg-success/10 text-success',
 };
 
-const AdminRequests = () => {
+const AdminOrders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: requests } = useQuery({
-    queryKey: ['admin-all-requests'],
+  const { data: orders } = useQuery({
+    queryKey: ['admin-all-orders'],
     queryFn: async () => {
       const { data } = await supabase
         .from('requests')
@@ -36,7 +36,7 @@ const AdminRequests = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-all-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-all-orders'] });
       toast({ title: 'Status updated' });
     },
   });
@@ -44,14 +44,14 @@ const AdminRequests = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h1 className="font-display text-2xl font-bold">Requests</h1>
+        <h1 className="font-display text-2xl font-bold">Orders</h1>
 
         <Card>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>RFQ #</TableHead>
+                  <TableHead>Order #</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Items</TableHead>
@@ -60,7 +60,7 @@ const AdminRequests = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests?.map(r => (
+                {orders?.map(r => (
                   <TableRow key={r.id}>
                     <TableCell className="font-mono font-medium">{r.request_number}</TableCell>
                     <TableCell>{r.company_name}</TableCell>
@@ -94,4 +94,4 @@ const AdminRequests = () => {
   );
 };
 
-export default AdminRequests;
+export default AdminOrders;

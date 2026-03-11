@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package, ArrowLeft, FileText } from 'lucide-react';
+import { Package, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formatPrice = (price: number) =>
@@ -75,7 +75,6 @@ const ProductDetail = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image */}
           <div className="aspect-square bg-muted rounded-xl flex items-center justify-center overflow-hidden">
             {product.image_url ? (
               <img src={product.image_url} alt={product.name} className="object-cover w-full h-full" />
@@ -84,7 +83,6 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {/* Info */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline" className="text-primary border-primary/20">{product.brand}</Badge>
@@ -129,10 +127,10 @@ const ProductDetail = () => {
               if (!user) {
                 navigate('/login');
               } else {
-                navigate(`/rfq?product=${product.id}`);
+                navigate(`/order?product=${product.id}`);
               }
             }}>
-              <FileText className="h-4 w-4 mr-2" /> Request Quotation
+              <ShoppingCart className="h-4 w-4 mr-2" /> Order Now
             </Button>
           </div>
         </div>

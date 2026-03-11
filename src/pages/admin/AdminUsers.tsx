@@ -23,6 +23,8 @@ interface UserRow {
   phone: string;
   password: string;
   role: string;
+  business_account: string;
+  location: string;
 }
 
 const AdminUsers = () => {
@@ -30,7 +32,7 @@ const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer' });
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '' });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -75,12 +77,16 @@ const AdminUsers = () => {
     setLoading(true);
     try {
       const res = await supabase.functions.invoke('create-user', {
-        body: { email: form.email, password: form.password, full_name: form.full_name, phone: form.phone || null, role: form.role },
+        body: {
+          email: form.email, password: form.password, full_name: form.full_name,
+          phone: form.phone || null, role: form.role,
+          business_account: form.business_account || null, location: form.location || null,
+        },
       });
       if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
       toast({ title: 'Success', description: 'User created successfully' });
       setOpen(false);
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer' });
+      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '' });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -89,9 +95,7 @@ const AdminUsers = () => {
     }
   };
 
-  const getDisplayStatus = (user: any) => {
-    return pendingStatus.get(user.user_id) || user.status;
-  };
+  const getDisplayStatus = (user: any) => pendingStatus.get(user.user_id) || user.status;
 
   const handleStatusChange = (userId: string, newStatus: string, currentStatus: string) => {
     if (newStatus === currentStatus) {
@@ -146,7 +150,7 @@ const AdminUsers = () => {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role']]);
+    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location']]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Users');
     XLSX.writeFile(wb, 'user_import_template.xlsx');
@@ -166,6 +170,8 @@ const AdminUsers = () => {
         phone: String(r.phone || '').trim(),
         password: String(r.password || '').trim(),
         role: String(r.role || 'buyer').trim(),
+        business_account: String(r.business_account || '').trim(),
+        location: String(r.location || '').trim(),
       })));
     };
     reader.readAsBinaryString(file);
@@ -180,7 +186,11 @@ const AdminUsers = () => {
       const row = importData[i];
       try {
         const res = await supabase.functions.invoke('create-user', {
-          body: { email: row.email, password: row.password, full_name: row.full_name, phone: row.phone || null, role: row.role },
+          body: {
+            email: row.email, password: row.password, full_name: row.full_name,
+            phone: row.phone || null, role: row.role,
+            business_account: row.business_account || null, location: row.location || null,
+          },
         });
         if (res.error || res.data?.error) throw new Error('fail');
         success++;
@@ -217,7 +227,7 @@ const AdminUsers = () => {
               <DialogTrigger asChild>
                 <Button><Plus className="mr-2 h-4 w-4" /> Add User</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New User</DialogTitle>
                   <DialogDescription>Create a new user account with an assigned role.</DialogDescription>
@@ -250,6 +260,14 @@ const AdminUsers = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="business_account">Business Account</Label>
+                    <Input id="business_account" value={form.business_account} onChange={e => setForm(f => ({ ...f, business_account: e.target.value }))} placeholder="Business account identifier" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input id="location" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="User location" />
+                  </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Creating...' : 'Create User'}
                   </Button>
@@ -259,7 +277,6 @@ const AdminUsers = () => {
           </div>
         </div>
 
-        {/* Action bars */}
         {(selectedIds.length > 0 || pendingStatus.size > 0) && (
           <div className="flex items-center gap-4 rounded-lg border bg-muted/50 p-3">
             {selectedIds.length > 0 && (
@@ -292,6 +309,8 @@ const AdminUsers = () => {
                   </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Business Account</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
@@ -308,6 +327,8 @@ const AdminUsers = () => {
                       </TableCell>
                       <TableCell className="font-medium">{u.full_name}</TableCell>
                       <TableCell>{u.phone || '-'}</TableCell>
+                      <TableCell className="text-sm">{(u as any).business_account || '-'}</TableCell>
+                      <TableCell className="text-sm">{(u as any).location || '-'}</TableCell>
                       <TableCell>
                         <Select value={displayStatus} onValueChange={(v) => handleStatusChange(u.user_id, v, u.status)}>
                           <SelectTrigger className="w-28 h-8">
@@ -333,7 +354,6 @@ const AdminUsers = () => {
           </CardContent>
         </Card>
 
-        {/* Delete Confirmation */}
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -347,12 +367,11 @@ const AdminUsers = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Import Dialog */}
         <Dialog open={importOpen} onOpenChange={(o) => { if (!importing) { setImportOpen(o); if (!o) setImportData([]); } }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Import Users</DialogTitle>
-              <DialogDescription>Upload an Excel file with columns: full_name, email, phone, password, role</DialogDescription>
+              <DialogDescription>Upload an Excel file with columns: full_name, email, phone, password, role, business_account, location</DialogDescription>
             </DialogHeader>
             {importData.length === 0 ? (
               <div className="space-y-4">
@@ -371,6 +390,8 @@ const AdminUsers = () => {
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Biz Account</TableHead>
+                        <TableHead>Location</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -380,6 +401,8 @@ const AdminUsers = () => {
                           <TableCell>{r.email}</TableCell>
                           <TableCell>{r.phone}</TableCell>
                           <TableCell>{r.role}</TableCell>
+                          <TableCell>{r.business_account}</TableCell>
+                          <TableCell>{r.location}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
