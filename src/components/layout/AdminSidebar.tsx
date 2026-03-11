@@ -1,4 +1,4 @@
-import { BarChart3, Package, Users, FileText, Settings, Home } from 'lucide-react';
+import { BarChart3, Package, Users, FileText, Home } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
@@ -16,14 +16,13 @@ import {
 const items = [
   { title: 'Dashboard', url: '/admin', icon: BarChart3 },
   { title: 'Products', url: '/admin/products', icon: Package },
-  { title: 'Requests', url: '/admin/requests', icon: FileText },
+  { title: 'Orders', url: '/admin/orders', icon: FileText },
   { title: 'Users', url: '/admin/users', icon: Users },
 ];
 
 const AdminSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon">
@@ -32,10 +31,10 @@ const AdminSidebar = () => {
           <SidebarGroupLabel>
             {!collapsed && (
               <div className="flex items-center gap-2 py-2">
-                <div className="w-7 h-7 rounded bg-sidebar-primary flex items-center justify-center">
-                  <span className="text-sidebar-primary-foreground font-display font-bold text-xs">SP</span>
+                <div className="w-7 h-7 rounded bg-[hsl(48,100%,50%)] flex items-center justify-center">
+                  <span className="text-[hsl(187,100%,22%)] font-display font-bold text-xs">⚡</span>
                 </div>
-                <span className="font-display font-semibold text-sm">Admin</span>
+                <span className="font-display font-semibold text-sm">PLN Admin</span>
               </div>
             )}
           </SidebarGroupLabel>

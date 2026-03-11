@@ -15,15 +15,15 @@ const AdminDashboard = () => {
         supabase.from('products').select('*', { count: 'exact', head: true }),
       ]);
       return {
-        totalRequests: reqRes.count || 0,
+        totalOrders: reqRes.count || 0,
         totalUsers: usersRes.count || 0,
         totalProducts: productsRes.count || 0,
       };
     },
   });
 
-  const { data: recentRequests } = useQuery({
-    queryKey: ['admin-recent-requests'],
+  const { data: recentOrders } = useQuery({
+    queryKey: ['admin-recent-orders'],
     queryFn: async () => {
       const { data } = await supabase
         .from('requests')
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   });
 
   const statCards = [
-    { title: 'Total Requests', value: stats?.totalRequests ?? '-', icon: FileText, color: 'text-primary' },
+    { title: 'Total Orders', value: stats?.totalOrders ?? '-', icon: FileText, color: 'text-primary' },
     { title: 'Total Buyers', value: stats?.totalUsers ?? '-', icon: Users, color: 'text-info' },
     { title: 'Total Products', value: stats?.totalProducts ?? '-', icon: Package, color: 'text-success' },
     { title: 'This Month', value: monthlyData?.length ? monthlyData[monthlyData.length - 1]?.count ?? 0 : '-', icon: TrendingUp, color: 'text-warning' },
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-display">Monthly Request Volume</CardTitle>
+              <CardTitle className="text-lg font-display">Monthly Order Volume</CardTitle>
             </CardHeader>
             <CardContent>
               {monthlyData && monthlyData.length > 0 ? (
@@ -92,19 +92,19 @@ const AdminDashboard = () => {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-muted-foreground text-center py-8">No request data yet</p>
+                <p className="text-muted-foreground text-center py-8">No order data yet</p>
               )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-display">Recent Requests</CardTitle>
+              <CardTitle className="text-lg font-display">Recent Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              {recentRequests?.length ? (
+              {recentOrders?.length ? (
                 <div className="space-y-3">
-                  {recentRequests.map(r => (
+                  {recentOrders.map(r => (
                     <div key={r.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                       <div>
                         <p className="font-medium text-sm">{r.request_number}</p>
@@ -117,7 +117,7 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">No requests yet</p>
+                <p className="text-muted-foreground text-center py-8">No orders yet</p>
               )}
             </CardContent>
           </Card>

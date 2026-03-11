@@ -2,8 +2,19 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const HeroBanner = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   return (
     <section className="relative bg-gradient-to-br from-primary/10 via-background to-accent overflow-hidden">
       <div className="absolute inset-0 opacity-5">
@@ -19,18 +30,24 @@ const HeroBanner = () => {
           </div>
 
           <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
-            Industrial Spare Parts <span className="text-primary">Procurement</span> Made Simple
+            Industrial Spare Parts <span className="text-primary">Marketplace</span>
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-            Browse thousands of industrial spare parts from trusted brands. Submit RFQs directly and get competitive
+            Browse thousands of industrial spare parts from trusted brands. Submit orders directly and get competitive
             quotes for your procurement needs.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input placeholder="Search parts by name, SKU, or brand..." className="pl-11 h-12 text-base" />
+              <Input
+                placeholder="Search parts by name, SKU, or brand..."
+                className="pl-11 h-12 text-base"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
             </div>
             <Button size="lg" className="h-12 px-8" asChild>
               <Link to="/products">

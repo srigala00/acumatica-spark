@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Upload, Download, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Upload, Download, Trash2, ImageIcon, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import * as XLSX from 'xlsx';
 
@@ -28,6 +28,7 @@ interface ProductRow {
   category: string;
   description: string;
   estimated_price: string;
+  inventory_id: string;
 }
 
 const AdminProducts = () => {
@@ -41,6 +42,10 @@ const AdminProducts = () => {
   const [importProgress, setImportProgress] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -73,12 +78,14 @@ const AdminProducts = () => {
   };
 
   const [form, setForm] = useState({
-    sku: '', name: '', brand: '', category_id: '', description: '', estimated_price: '', is_active: true,
+    sku: '', name: '', brand: '', category_id: '', description: '', estimated_price: '', is_active: true, inventory_id: '',
   });
 
   const resetForm = () => {
-    setForm({ sku: '', name: '', brand: '', category_id: '', description: '', estimated_price: '', is_active: true });
+    setForm({ sku: '', name: '', brand: '', category_id: '', description: '', estimated_price: '', is_active: true, inventory_id: '' });
     setEditProduct(null);
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const openEdit = (p: any) => {
@@ -86,24 +93,63 @@ const AdminProducts = () => {
     setForm({
       sku: p.sku, name: p.name, brand: p.brand || '', category_id: p.category_id || '',
       description: p.description || '', estimated_price: p.estimated_price?.toString() || '', is_active: p.is_active,
+      inventory_id: p.inventory_id || '',
     });
+    setImagePreview(p.image_url || null);
+    setImageFile(null);
     setDialogOpen(true);
+  };
+
+  const uploadImage = async (productId: string): Promise<string | null> => {
+    if (!imageFile) return editProduct?.image_url || null;
+    setUploadingImage(true);
+    const ext = imageFile.name.split('.').pop();
+    const filePath = `${productId}.${ext}`;
+    
+    const { error } = await supabase.storage.from('product-images').upload(filePath, imageFile, { upsert: true });
+    setUploadingImage(false);
+    if (error) {
+      toast({ title: 'Image upload failed', description: error.message, variant: 'destructive' });
+      return editProduct?.image_url || null;
+    }
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filePath);
+    return urlData.publicUrl + '?t=' + Date.now();
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const payload: any = {
         sku: form.sku, name: form.name, brand: form.brand || null,
         category_id: form.category_id || null, description: form.description || null,
         estimated_price: form.estimated_price ? parseFloat(form.estimated_price) : null,
         is_active: form.is_active,
+        inventory_id: form.inventory_id || null,
       };
+
       if (editProduct) {
+        const imageUrl = await uploadImage(editProduct.id);
+        payload.image_url = imageUrl;
         const { error } = await supabase.from('products').update(payload).eq('id', editProduct.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('products').insert(payload);
+        const { data, error } = await supabase.from('products').insert(payload).select().single();
         if (error) throw error;
+        if (imageFile && data) {
+          const imageUrl = await uploadImage(data.id);
+          await supabase.from('products').update({ image_url: imageUrl }).eq('id', data.id);
+        }
       }
     },
     onSuccess: () => {
@@ -129,7 +175,7 @@ const AdminProducts = () => {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([['sku', 'name', 'brand', 'category', 'description', 'estimated_price']]);
+    const ws = XLSX.utils.aoa_to_sheet([['sku', 'name', 'brand', 'category', 'description', 'estimated_price', 'inventory_id']]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Products');
     XLSX.writeFile(wb, 'product_import_template.xlsx');
@@ -150,6 +196,7 @@ const AdminProducts = () => {
         category: String(r.category || '').trim(),
         description: String(r.description || '').trim(),
         estimated_price: String(r.estimated_price || '').trim(),
+        inventory_id: String(r.inventory_id || '').trim(),
       })));
     };
     reader.readAsBinaryString(file);
@@ -168,6 +215,7 @@ const AdminProducts = () => {
       category_id: categoryMap.get(r.category.toLowerCase()) || null,
       description: r.description || null,
       estimated_price: r.estimated_price ? parseFloat(r.estimated_price) : null,
+      inventory_id: r.inventory_id || null,
     })).filter(r => r.sku && r.name);
 
     let success = 0;
@@ -175,7 +223,7 @@ const AdminProducts = () => {
     const chunkSize = 50;
     for (let i = 0; i < rows.length; i += chunkSize) {
       const chunk = rows.slice(i, i + chunkSize);
-      const { error } = await supabase.from('products').insert(chunk);
+      const { error } = await supabase.from('products').insert(chunk as any);
       if (error) errors += chunk.length;
       else success += chunk.length;
       setImportProgress(Math.round(((i + chunk.length) / rows.length) * 100));
@@ -201,11 +249,33 @@ const AdminProducts = () => {
               <DialogTrigger asChild>
                 <Button><Plus className="h-4 w-4 mr-2" /> Add Product</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
+                  {/* Image upload */}
+                  <div className="space-y-2">
+                    <Label>Product Image</Label>
+                    {imagePreview ? (
+                      <div className="relative w-full h-40 rounded-lg overflow-hidden bg-muted">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={removeImage}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="w-full h-32 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-sm text-muted-foreground">Click to upload image</span>
+                      </div>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>SKU *</Label>
@@ -236,11 +306,15 @@ const AdminProducts = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
+                    <Label>Inventory ID</Label>
+                    <Input value={form.inventory_id} onChange={(e) => setForm({ ...form, inventory_id: e.target.value })} placeholder="Internal inventory reference" />
+                  </div>
+                  <div className="space-y-2">
                     <Label>Description</Label>
                     <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
                   </div>
-                  <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
-                    {saveMutation.isPending ? 'Saving...' : 'Save Product'}
+                  <Button type="submit" className="w-full" disabled={saveMutation.isPending || uploadingImage}>
+                    {saveMutation.isPending || uploadingImage ? 'Saving...' : 'Save Product'}
                   </Button>
                 </form>
               </DialogContent>
@@ -265,10 +339,12 @@ const AdminProducts = () => {
                   <TableHead className="w-10">
                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
                   </TableHead>
+                  <TableHead className="w-16">Image</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Brand</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Inventory ID</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead></TableHead>
@@ -280,10 +356,20 @@ const AdminProducts = () => {
                     <TableCell>
                       <Checkbox checked={selectedIds.includes(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
                     </TableCell>
+                    <TableCell>
+                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center overflow-hidden">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{p.brand}</TableCell>
                     <TableCell>{(p.categories as any)?.name || '-'}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{(p as any).inventory_id || '-'}</TableCell>
                     <TableCell>{p.estimated_price ? formatPrice(p.estimated_price) : '-'}</TableCell>
                     <TableCell>
                       <Badge variant={p.is_active ? 'default' : 'secondary'}>
@@ -302,7 +388,6 @@ const AdminProducts = () => {
           </CardContent>
         </Card>
 
-        {/* Delete Confirmation */}
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -316,12 +401,11 @@ const AdminProducts = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Import Dialog */}
         <Dialog open={importOpen} onOpenChange={(o) => { if (!importing) { setImportOpen(o); if (!o) setImportData([]); } }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Import Products</DialogTitle>
-              <DialogDescription>Upload an Excel file with columns: sku, name, brand, category, description, estimated_price</DialogDescription>
+              <DialogDescription>Upload an Excel file with columns: sku, name, brand, category, description, estimated_price, inventory_id</DialogDescription>
             </DialogHeader>
             {importData.length === 0 ? (
               <div className="space-y-4">
@@ -341,6 +425,7 @@ const AdminProducts = () => {
                         <TableHead>Brand</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Price</TableHead>
+                        <TableHead>Inv. ID</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -351,6 +436,7 @@ const AdminProducts = () => {
                           <TableCell>{r.brand}</TableCell>
                           <TableCell>{r.category}</TableCell>
                           <TableCell>{r.estimated_price}</TableCell>
+                          <TableCell>{r.inventory_id}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import PublicLayout from '@/components/layout/PublicLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { FileText, Package, User, ArrowRight } from 'lucide-react';
@@ -13,11 +13,11 @@ const BuyerDashboard = () => {
   const { data: stats } = useQuery({
     queryKey: ['buyer-stats'],
     queryFn: async () => {
-      const { count: totalRequests } = await supabase
+      const { count: totalOrders } = await supabase
         .from('requests').select('*', { count: 'exact', head: true }).eq('user_id', user!.id);
-      const { count: activeRequests } = await supabase
+      const { count: activeOrders } = await supabase
         .from('requests').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).neq('status', 'closed');
-      return { totalRequests: totalRequests || 0, activeRequests: activeRequests || 0 };
+      return { totalOrders: totalOrders || 0, activeOrders: activeOrders || 0 };
     },
     enabled: !!user,
   });
@@ -37,8 +37,8 @@ const BuyerDashboard = () => {
                 <FileText className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display font-bold">{stats?.totalRequests ?? '-'}</p>
-                <p className="text-sm text-muted-foreground">Total Requests</p>
+                <p className="text-2xl font-display font-bold">{stats?.totalOrders ?? '-'}</p>
+                <p className="text-sm text-muted-foreground">Total Orders</p>
               </div>
             </CardContent>
           </Card>
@@ -48,8 +48,8 @@ const BuyerDashboard = () => {
                 <Package className="h-6 w-6 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-display font-bold">{stats?.activeRequests ?? '-'}</p>
-                <p className="text-sm text-muted-foreground">Active Requests</p>
+                <p className="text-2xl font-display font-bold">{stats?.activeOrders ?? '-'}</p>
+                <p className="text-sm text-muted-foreground">Active Orders</p>
               </div>
             </CardContent>
           </Card>
@@ -69,16 +69,16 @@ const BuyerDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
-              <h3 className="font-display font-semibold mb-2">Submit New RFQ</h3>
-              <p className="text-sm text-muted-foreground mb-4">Request a quotation for spare parts and equipment</p>
-              <Button asChild><Link to="/rfq">Submit Request <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
+              <h3 className="font-display font-semibold mb-2">Submit New Order</h3>
+              <p className="text-sm text-muted-foreground mb-4">Order spare parts and equipment</p>
+              <Button asChild><Link to="/order">Submit Order <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
             </CardContent>
           </Card>
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
-              <h3 className="font-display font-semibold mb-2">View My Requests</h3>
-              <p className="text-sm text-muted-foreground mb-4">Track status of your quotation requests</p>
-              <Button variant="outline" asChild><Link to="/requests">View Requests <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
+              <h3 className="font-display font-semibold mb-2">View My Orders</h3>
+              <p className="text-sm text-muted-foreground mb-4">Track status of your orders</p>
+              <Button variant="outline" asChild><Link to="/orders">View Orders <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
             </CardContent>
           </Card>
         </div>
