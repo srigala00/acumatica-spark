@@ -473,8 +473,12 @@ const AdminUsers = () => {
                 <Input value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Change Email (leave blank to keep current)</Label>
-                <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="New email address" />
+                <Label>Email Saat Ini</Label>
+                <Input value={editUser?.email || ''} readOnly disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ubah Email (kosongkan jika tidak ingin mengubah)</Label>
+                <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="Email baru" />
               </div>
               {isSuperAdmin && (
                 <div className="space-y-2">
