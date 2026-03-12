@@ -27,6 +27,7 @@ interface UserRow {
   business_account: string;
   location: string;
   unit: string;
+  company_name: string;
 }
 
 const AdminUsers = () => {
