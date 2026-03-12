@@ -233,6 +233,7 @@ const AdminUsers = () => {
         business_account: String(r.business_account || '').trim(),
         location: String(r.location || '').trim(),
         unit: String(r.unit || '').trim(),
+        company_name: String((r as any).company_name || '').trim(),
       })));
     };
     reader.readAsBinaryString(file);
