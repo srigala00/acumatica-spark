@@ -142,7 +142,7 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-8 h-12 text-sm font-medium">
             <Link to="/" className="text-foreground hover:text-primary transition-colors">HOME</Link>
             <Link to="/products" className="text-foreground hover:text-primary transition-colors">PRODUCTS</Link>
-            <Link to="/order" className="text-foreground hover:text-primary transition-colors">QUOTATION</Link>
+            <Link to="/cart" className="text-foreground hover:text-primary transition-colors">CART</Link>
             <Link to="/about" className="text-foreground hover:text-primary transition-colors">ABOUT US</Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">CONTACT US</Link>
           </div>
