@@ -246,7 +246,7 @@ const Cart = () => {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Business Account</Label>
-                    <Input value={form.businessAccount} onChange={(e) => setForm({ ...form, businessAccount: e.target.value })} placeholder="Business account number" />
+                    <Input value={form.businessAccount} readOnly disabled className="bg-muted" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Shipping Address *</Label>
