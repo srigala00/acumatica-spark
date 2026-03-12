@@ -156,6 +156,7 @@ const AdminOrders = () => {
         quantity: 1,
         specification: '',
         inventory_id: p.inventory_id || '',
+        unit_price: p.estimated_price ? String(p.estimated_price) : '',
       });
     }
   };
