@@ -44,7 +44,7 @@ const OrderSubmission = () => {
   const { data: products } = useQuery({
     queryKey: ['all-products'],
     queryFn: async () => {
-      const { data } = await supabase.from('products').select('id, name, sku').eq('is_active', true).order('name');
+      const { data } = await supabase.from('products').select('id, name, sku, estimated_price').eq('is_active', true).order('name');
       return data || [];
     },
   });
