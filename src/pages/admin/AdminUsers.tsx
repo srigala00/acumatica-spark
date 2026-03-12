@@ -400,6 +400,7 @@ const AdminUsers = () => {
                         <Checkbox checked={selectedIds.includes(u.user_id)} onCheckedChange={() => toggleSelect(u.user_id)} />
                       </TableCell>
                       <TableCell className="font-medium">{u.full_name}</TableCell>
+                      <TableCell className="text-sm">{(u as any).company_name || '-'}</TableCell>
                       <TableCell>{u.phone || '-'}</TableCell>
                       <TableCell className="text-sm">{(u as any).unit || '-'}</TableCell>
                       <TableCell className="text-sm">{u.business_account || '-'}</TableCell>
