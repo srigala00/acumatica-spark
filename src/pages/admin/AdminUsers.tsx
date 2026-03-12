@@ -55,10 +55,15 @@ const AdminUsers = () => {
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-      const { data: roles } = await supabase.from('user_roles').select('*');
+      const [{ data: profiles }, { data: roles }, emailsRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('user_roles').select('*'),
+        supabase.functions.invoke('manage-user', { body: { action: 'list_emails' } }),
+      ]);
+      const emailMap: Record<string, string> = emailsRes.data?.emails || {};
       return (profiles || []).map(p => ({
         ...p,
+        email: emailMap[p.user_id] || '',
         roles: (roles || []).filter(r => r.user_id === p.user_id).map(r => r.role),
       }));
     },
@@ -468,8 +473,12 @@ const AdminUsers = () => {
                 <Input value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Change Email (leave blank to keep current)</Label>
-                <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="New email address" />
+                <Label>Email Saat Ini</Label>
+                <Input value={editUser?.email || ''} readOnly disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Ubah Email (kosongkan jika tidak ingin mengubah)</Label>
+                <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} placeholder="Email baru" />
               </div>
               {isSuperAdmin && (
                 <div className="space-y-2">
