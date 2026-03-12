@@ -252,7 +252,7 @@ const AdminUsers = () => {
             email: row.email, password: row.password, full_name: row.full_name,
             phone: row.phone || null, role: row.role,
             business_account: row.business_account || null, location: row.location || null,
-            unit: row.unit || null,
+            unit: row.unit || null, company_name: row.company_name || null,
           },
         });
         if (res.error || res.data?.error) throw new Error('fail');
