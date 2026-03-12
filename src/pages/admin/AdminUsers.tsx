@@ -37,7 +37,7 @@ const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '', company_name: '' });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
