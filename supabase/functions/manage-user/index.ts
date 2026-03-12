@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { full_name, phone, business_account, location, unit, role, email } = body;
+      const { full_name, phone, business_account, location, unit, role, email, company_name } = body;
 
       // Update profile fields
       const profileUpdate: Record<string, any> = {};
@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
       if (business_account !== undefined) profileUpdate.business_account = business_account;
       if (location !== undefined) profileUpdate.location = location;
       if (unit !== undefined) profileUpdate.unit = unit;
+      if (company_name !== undefined) profileUpdate.company_name = company_name;
 
       if (Object.keys(profileUpdate).length > 0) {
         const { error } = await adminClient

@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
     if (business_account) profileUpdate.business_account = business_account;
     if (location) profileUpdate.location = location;
     if (unit) profileUpdate.unit = unit;
+    if (company_name) profileUpdate.company_name = company_name;
 
     if (Object.keys(profileUpdate).length > 0) {
       await adminClient
