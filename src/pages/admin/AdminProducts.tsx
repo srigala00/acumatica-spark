@@ -223,7 +223,7 @@ const AdminProducts = () => {
     const chunkSize = 50;
     for (let i = 0; i < rows.length; i += chunkSize) {
       const chunk = rows.slice(i, i + chunkSize);
-      const { error } = await supabase.from('products').insert(chunk as any);
+      const { error } = await supabase.from('products').upsert(chunk as any, { onConflict: 'sku' });
       if (error) errors += chunk.length;
       else success += chunk.length;
       setImportProgress(Math.round(((i + chunk.length) / rows.length) * 100));
