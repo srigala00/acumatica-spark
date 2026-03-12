@@ -362,7 +362,7 @@ const AdminOrders = () => {
                   </TableHeader>
                   <TableBody>
                     {(selectedOrder.request_items as any[])?.map((item: any, idx: number) => {
-                      const price = products?.find(p => p.id === item.product_id)?.estimated_price;
+                      const price = item.unit_price;
                       return (
                         <TableRow key={item.id}>
                           <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
@@ -381,8 +381,7 @@ const AdminOrders = () => {
                 {(() => {
                   const items = (selectedOrder.request_items as any[]) || [];
                   const total = items.reduce((sum: number, item: any) => {
-                    const price = products?.find(p => p.id === item.product_id)?.estimated_price;
-                    return sum + (price ? price * item.quantity : 0);
+                    return sum + ((item.unit_price || 0) * item.quantity);
                   }, 0);
                   return total > 0 ? (
                     <div className="flex justify-end mt-3 pt-3 border-t border-border">
