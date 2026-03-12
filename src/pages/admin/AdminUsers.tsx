@@ -454,6 +454,10 @@ const AdminUsers = () => {
                 <Input value={editForm.unit} onChange={e => setEditForm(f => ({ ...f, unit: e.target.value }))} placeholder="Unit / department" />
               </div>
               <div className="space-y-2">
+                <Label>Company Name</Label>
+                <Input value={editForm.company_name} onChange={e => setEditForm(f => ({ ...f, company_name: e.target.value }))} placeholder="Company name" />
+              </div>
+              <div className="space-y-2">
                 <Label>Business Account</Label>
                 <Input value={editForm.business_account} onChange={e => setEditForm(f => ({ ...f, business_account: e.target.value }))} />
               </div>
