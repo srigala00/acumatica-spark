@@ -73,6 +73,12 @@ const OrderDetail = () => {
 
   const status = statusConfig[order.status] || statusConfig.submitted;
   const items = (order.request_items as any[]) || [];
+  const priceMap = (order as any)._priceMap || {};
+  const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+  const totalEstimated = items.reduce((sum: number, item: any) => {
+    const price = priceMap[item.product_id];
+    return sum + (price ? price * item.quantity : 0);
+  }, 0);
 
   return (
     <PublicLayout>
