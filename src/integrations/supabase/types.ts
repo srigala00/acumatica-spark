@@ -301,6 +301,7 @@ export type Database = {
       }
       requests: {
         Row: {
+          business_account: string | null
           company_name: string
           contact_person: string
           created_at: string
@@ -310,11 +311,13 @@ export type Database = {
           id: string
           phone: string | null
           request_number: string
+          shipping_address: string | null
           status: Database["public"]["Enums"]["request_status"]
           updated_at: string
           user_id: string
         }
         Insert: {
+          business_account?: string | null
           company_name: string
           contact_person: string
           created_at?: string
@@ -324,11 +327,13 @@ export type Database = {
           id?: string
           phone?: string | null
           request_number: string
+          shipping_address?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           updated_at?: string
           user_id: string
         }
         Update: {
+          business_account?: string | null
           company_name?: string
           contact_person?: string
           created_at?: string
@@ -338,6 +343,7 @@ export type Database = {
           id?: string
           phone?: string | null
           request_number?: string
+          shipping_address?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           updated_at?: string
           user_id?: string
@@ -377,7 +383,15 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "buyer" | "sales"
-      request_status: "submitted" | "sent_to_erp" | "in_review" | "closed"
+      request_status:
+        | "submitted"
+        | "sent_to_erp"
+        | "in_review"
+        | "closed"
+        | "processed"
+        | "on_delivery"
+        | "completed"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -506,7 +520,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "buyer", "sales"],
-      request_status: ["submitted", "sent_to_erp", "in_review", "closed"],
+      request_status: [
+        "submitted",
+        "sent_to_erp",
+        "in_review",
+        "closed",
+        "processed",
+        "on_delivery",
+        "completed",
+        "rejected",
+      ],
     },
   },
 } as const
