@@ -189,7 +189,7 @@ const OrderDetail = () => {
               </TableHeader>
               <TableBody>
                 {items.map((item: any, idx: number) => {
-                  const unitPrice = priceMap[item.product_id];
+                  const unitPrice = item.unit_price;
                   return (
                     <TableRow key={item.id}>
                       <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
