@@ -324,6 +324,10 @@ const AdminUsers = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="company_name">Company Name</Label>
+                    <Input id="company_name" value={form.company_name} onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))} placeholder="Company name" />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="business_account">Business Account</Label>
                     <Input id="business_account" value={form.business_account} onChange={e => setForm(f => ({ ...f, business_account: e.target.value }))} placeholder="Business account identifier" />
                   </div>
