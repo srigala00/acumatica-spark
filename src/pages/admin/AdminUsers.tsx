@@ -116,6 +116,7 @@ const AdminUsers = () => {
       unit: (user as any).unit || '',
       role: user.roles?.[0] || 'buyer',
       email: '',
+      company_name: (user as any).company_name || '',
     });
     setEditOpen(true);
   };
