@@ -205,6 +205,7 @@ const AdminOrders = () => {
             quantity: item.quantity,
             specification: item.specification || null,
             inventory_id: item.inventory_id || null,
+            unit_price: item.unit_price || null,
           } as any);
         } else {
           await supabase.from('request_items').update({
@@ -212,6 +213,7 @@ const AdminOrders = () => {
             quantity: item.quantity,
             specification: item.specification || null,
             inventory_id: item.inventory_id || null,
+            unit_price: item.unit_price || null,
           } as any).eq('id', item.id);
         }
       }
