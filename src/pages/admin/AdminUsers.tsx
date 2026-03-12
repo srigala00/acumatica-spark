@@ -97,7 +97,7 @@ const AdminUsers = () => {
       if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
       toast({ title: 'Success', description: 'User created successfully' });
       setOpen(false);
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '' });
+      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '', company_name: '' });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
