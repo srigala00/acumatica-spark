@@ -15,6 +15,7 @@ import {
 
 const Header = () => {
   const { user, profile, signOut, isAdmin } = useAuth();
+  const { cartCount } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
