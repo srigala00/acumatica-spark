@@ -139,9 +139,10 @@ const AdminOrders = () => {
       quantity: newItem.quantity,
       specification: newItem.specification,
       inventory_id: newItem.inventory_id,
+      unit_price: newItem.unit_price ? parseFloat(newItem.unit_price) : null,
       _isNew: true,
     }]);
-    setNewItem({ product_id: '', product_name: '', sku: '', quantity: 1, specification: '', inventory_id: '' });
+    setNewItem({ product_id: '', product_name: '', sku: '', quantity: 1, specification: '', inventory_id: '', unit_price: '' });
     setShowAddItem(false);
   };
 
