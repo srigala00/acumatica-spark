@@ -25,6 +25,7 @@ const stockLabels: Record<string, string> = {
 };
 
 const Products = () => {
+  const { addToCart } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get('category') || '';
   const searchQuery = searchParams.get('search') || '';
