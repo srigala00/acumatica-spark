@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify caller is super_admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -38,7 +37,6 @@ Deno.serve(async (req) => {
 
     const callerId = claimsData.claims.sub;
 
-    // Check caller has super_admin role
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -57,9 +55,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, full_name, phone, role } = await req.json();
+    const { email, password, full_name, phone, role, business_account, location, unit } = await req.json();
 
-    // Validate inputs
     if (!email || !password || !full_name || !role) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
@@ -75,7 +72,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create the user with auto-confirm
     const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -92,15 +88,20 @@ Deno.serve(async (req) => {
 
     const userId = userData.user.id;
 
-    // Update profile with phone if provided
-    if (phone) {
+    // Update profile with optional fields
+    const profileUpdate: Record<string, any> = {};
+    if (phone) profileUpdate.phone = phone;
+    if (business_account) profileUpdate.business_account = business_account;
+    if (location) profileUpdate.location = location;
+    if (unit) profileUpdate.unit = unit;
+
+    if (Object.keys(profileUpdate).length > 0) {
       await adminClient
         .from("profiles")
-        .update({ phone })
+        .update(profileUpdate)
         .eq("user_id", userId);
     }
 
-    // If role is not 'buyer', update the default role inserted by trigger
     if (role !== "buyer") {
       await adminClient
         .from("user_roles")
