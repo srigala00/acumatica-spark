@@ -27,11 +27,18 @@ const Cart = () => {
     email: '',
     phone: '',
     description: '',
+    shippingAddress: '',
+    businessAccount: '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (profile) setForm(prev => ({ ...prev, contactPerson: profile.full_name, phone: profile.phone || '' }));
+    if (profile) setForm(prev => ({
+      ...prev,
+      contactPerson: profile.full_name,
+      phone: profile.phone || '',
+      businessAccount: (profile as any).business_account || '',
+    }));
     if (user) setForm(prev => ({ ...prev, email: user.email || '' }));
   }, [profile, user]);
 
@@ -55,6 +62,8 @@ const Cart = () => {
         email: form.email,
         phone: form.phone,
         description: form.description,
+        shipping_address: form.shippingAddress,
+        business_account: form.businessAccount,
         request_number: 'TEMP',
       } as any)
       .select()
@@ -202,7 +211,7 @@ const Cart = () => {
             <form onSubmit={handleSubmit}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Company Information</CardTitle>
+                  <CardTitle className="text-lg">Order Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-1.5">
@@ -222,8 +231,16 @@ const Cart = () => {
                     <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                   </div>
                   <div className="space-y-1.5">
+                    <Label className="text-xs">Business Account</Label>
+                    <Input value={form.businessAccount} onChange={(e) => setForm({ ...form, businessAccount: e.target.value })} placeholder="Business account number" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Shipping Address *</Label>
+                    <Textarea required value={form.shippingAddress} onChange={(e) => setForm({ ...form, shippingAddress: e.target.value })} placeholder="Full shipping address" rows={3} />
+                  </div>
+                  <div className="space-y-1.5">
                     <Label className="text-xs">Notes</Label>
-                    <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional requirements..." rows={3} />
+                    <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Additional requirements..." rows={2} />
                   </div>
                   <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
                     <Send className="h-4 w-4 mr-2" /> {loading ? 'Submitting...' : 'Submit Order'}
