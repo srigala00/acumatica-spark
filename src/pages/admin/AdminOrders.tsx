@@ -506,35 +506,54 @@ const AdminOrders = () => {
                       <TableHead>Inventory ID</TableHead>
                       <TableHead>Spec</TableHead>
                       <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Unit Price</TableHead>
+                      <TableHead className="text-right">Ext. Price</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {editItems.map((item, idx) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                        <TableCell>
-                          <Input value={item.product_name} onChange={e => updateEditItem(idx, 'product_name', e.target.value)} className="h-8 text-sm" />
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">{item.sku || '-'}</TableCell>
-                        <TableCell>
-                          <Input value={item.inventory_id || ''} onChange={e => updateEditItem(idx, 'inventory_id', e.target.value)} className="h-8 text-xs font-mono w-24" />
-                        </TableCell>
-                        <TableCell>
-                          <Input value={item.specification || ''} onChange={e => updateEditItem(idx, 'specification', e.target.value)} className="h-8 text-xs" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Input type="number" min={1} value={item.quantity} onChange={e => updateEditItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="h-8 text-sm w-16 text-right" />
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeEditItem(idx)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {editItems.map((item, idx) => {
+                      const up = item.unit_price ? Number(item.unit_price) : 0;
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                          <TableCell>
+                            <Input value={item.product_name} onChange={e => updateEditItem(idx, 'product_name', e.target.value)} className="h-8 text-sm" />
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">{item.sku || '-'}</TableCell>
+                          <TableCell>
+                            <Input value={item.inventory_id || ''} onChange={e => updateEditItem(idx, 'inventory_id', e.target.value)} className="h-8 text-xs font-mono w-24" />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={item.specification || ''} onChange={e => updateEditItem(idx, 'specification', e.target.value)} className="h-8 text-xs" />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Input type="number" min={1} value={item.quantity} onChange={e => updateEditItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="h-8 text-sm w-16 text-right" />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Input type="number" min={0} value={item.unit_price ?? ''} onChange={e => updateEditItem(idx, 'unit_price', e.target.value ? parseFloat(e.target.value) : null)} className="h-8 text-sm w-28 text-right" placeholder="0" />
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium">
+                            {up > 0 ? formatPrice(up * item.quantity) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeEditItem(idx)}>
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
+                {(() => {
+                  const total = editItems.reduce((sum: number, item: any) => sum + ((Number(item.unit_price) || 0) * item.quantity), 0);
+                  return total > 0 ? (
+                    <div className="flex justify-end mt-3 pt-3 border-t border-border">
+                      <div className="text-sm font-semibold">Total: <span className="text-primary">{formatPrice(total)}</span></div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </>
           )}
