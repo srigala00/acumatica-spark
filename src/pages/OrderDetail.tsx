@@ -31,11 +31,20 @@ const OrderDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('requests')
-        .select('*, request_items(id, product_name, quantity, sku, specification)')
+        .select('*, request_items(id, product_name, quantity, sku, specification, product_id)')
         .eq('id', id!)
         .single();
       if (error) throw error;
-      return data;
+
+      // Fetch prices for items with product_id
+      const productIds = (data.request_items as any[])?.map((i: any) => i.product_id).filter(Boolean) || [];
+      let priceMap: Record<string, number> = {};
+      if (productIds.length > 0) {
+        const { data: prods } = await supabase.from('products').select('id, estimated_price').in('id', productIds);
+        prods?.forEach(p => { if (p.estimated_price) priceMap[p.id] = p.estimated_price; });
+      }
+
+      return { ...data, _priceMap: priceMap };
     },
     enabled: !!id && !!user,
   });
@@ -64,6 +73,12 @@ const OrderDetail = () => {
 
   const status = statusConfig[order.status] || statusConfig.submitted;
   const items = (order.request_items as any[]) || [];
+  const priceMap = (order as any)._priceMap || {};
+  const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+  const totalEstimated = items.reduce((sum: number, item: any) => {
+    const price = priceMap[item.product_id];
+    return sum + (price ? price * item.quantity : 0);
+  }, 0);
 
   return (
     <PublicLayout>
@@ -179,20 +194,32 @@ const OrderDetail = () => {
                   <TableHead>SKU</TableHead>
                   <TableHead>Specification</TableHead>
                   <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Unit Price</TableHead>
+                  <TableHead className="text-right">Ext. Price</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item: any, idx: number) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                    <TableCell className="font-medium">{item.product_name}</TableCell>
-                    <TableCell className="font-mono text-sm">{item.sku || '-'}</TableCell>
-                    <TableCell className="text-sm">{item.specification || '-'}</TableCell>
-                    <TableCell className="text-right font-medium">{item.quantity}</TableCell>
-                  </TableRow>
-                ))}
+                {items.map((item: any, idx: number) => {
+                  const unitPrice = priceMap[item.product_id];
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="font-medium">{item.product_name}</TableCell>
+                      <TableCell className="font-mono text-sm">{item.sku || '-'}</TableCell>
+                      <TableCell className="text-sm">{item.specification || '-'}</TableCell>
+                      <TableCell className="text-right font-medium">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-sm">{unitPrice ? formatPrice(unitPrice) : '-'}</TableCell>
+                      <TableCell className="text-right font-medium">{unitPrice ? formatPrice(unitPrice * item.quantity) : '-'}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
+            {totalEstimated > 0 && (
+              <div className="flex justify-end px-4 py-3 border-t border-border">
+                <div className="text-sm font-semibold">Total Estimated: <span className="text-primary">{formatPrice(totalEstimated)}</span></div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
