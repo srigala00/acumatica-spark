@@ -208,28 +208,69 @@ const AdminProducts = () => {
     setImportProgress(0);
 
     const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
-    const rows = importData.map(r => ({
-      sku: r.sku,
-      name: r.name,
-      brand: r.brand || null,
-      category_id: categoryMap.get(r.category.toLowerCase()) || null,
-      description: r.description || null,
-      estimated_price: r.estimated_price ? parseFloat(r.estimated_price) : null,
-      inventory_id: r.inventory_id || null,
-    })).filter(r => r.sku && r.name);
+    const rows = importData.map(r => {
+      const cleanedPrice = String(r.estimated_price || '').replace(/[^0-9.-]/g, '');
+      const parsedPrice = cleanedPrice ? Number(cleanedPrice) : null;
+
+      return {
+        sku: r.sku.trim(),
+        name: r.name.trim(),
+        brand: r.brand || null,
+        category_id: categoryMap.get(r.category.toLowerCase()) || null,
+        description: r.description || null,
+        estimated_price: Number.isNaN(parsedPrice) ? null : parsedPrice,
+        inventory_id: r.inventory_id || null,
+      };
+    }).filter(r => r.sku && r.name);
+
+    const skuCounts = new Map<string, number>();
+    rows.forEach(r => {
+      const key = r.sku.toLowerCase();
+      skuCounts.set(key, (skuCounts.get(key) || 0) + 1);
+    });
+
+    const duplicateSkus = Array.from(skuCounts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([sku, count]) => `${sku.toUpperCase()} (${count}x)`);
+
+    if (duplicateSkus.length > 0) {
+      setImporting(false);
+      toast({
+        title: 'Import dibatalkan',
+        description: `SKU duplikat di file: ${duplicateSkus.join(', ')}. SKU harus unik.`,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     let success = 0;
     let errors = 0;
+    const errorSamples: string[] = [];
     const chunkSize = 50;
+
     for (let i = 0; i < rows.length; i += chunkSize) {
       const chunk = rows.slice(i, i + chunkSize);
       const { error } = await supabase.from('products').upsert(chunk as any, { onConflict: 'sku' });
-      if (error) errors += chunk.length;
-      else success += chunk.length;
+
+      if (!error) {
+        success += chunk.length;
+      } else {
+        for (const row of chunk) {
+          const { error: rowError } = await supabase.from('products').upsert(row as any, { onConflict: 'sku' });
+          if (rowError) {
+            errors += 1;
+            if (errorSamples.length < 3) errorSamples.push(`${row.sku}: ${rowError.message}`);
+          } else {
+            success += 1;
+          }
+        }
+      }
+
       setImportProgress(Math.round(((i + chunk.length) / rows.length) * 100));
     }
 
-    toast({ title: 'Import complete', description: `${success} created, ${errors} failed` });
+    const detail = errorSamples.length ? ` Contoh error: ${errorSamples.join(' | ')}` : '';
+    toast({ title: 'Import complete', description: `${success} created, ${errors} failed.${detail}` });
     setImporting(false);
     setImportOpen(false);
     setImportData([]);
