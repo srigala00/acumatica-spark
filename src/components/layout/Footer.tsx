@@ -14,7 +14,31 @@ const Footer = () => {
             </p>
           </div>
 
-          <div></div>
+          <div>
+            <h4 className="font-display font-semibold mb-4">Products</h4>
+            <ul className="space-y-2 text-sm opacity-70">
+              <li>
+                <Link to="/products?category=boiler-parts" className="hover:opacity-100">
+                  Boiler Parts
+                </Link>
+              </li>
+              <li>
+                <Link to="/products?category=generator-parts" className="hover:opacity-100">
+                  Generator Parts
+                </Link>
+              </li>
+              <li>
+                <Link to="/products?category=turbine-parts" className="hover:opacity-100">
+                  Turbine Parts
+                </Link>
+              </li>
+              <li>
+                <Link to="/products?category=pumps-compressors" className="hover:opacity-100">
+                  Pumps & Compressors
+                </Link>
+              </li>
+            </ul>
+          </div>
 
           <div>
             <h4 className="font-display font-semibold mb-4">Company</h4>
