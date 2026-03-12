@@ -231,19 +231,19 @@ const Cart = () => {
                 <CardContent className="space-y-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Company Name *</Label>
-                    <Input required value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
+                    <Input required value={form.companyName} readOnly disabled className="bg-muted" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Contact Person *</Label>
-                    <Input required value={form.contactPerson} onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} />
+                    <Input required value={form.contactPerson} readOnly disabled className="bg-muted" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Email *</Label>
-                    <Input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                    <Input type="email" required value={form.email} readOnly disabled className="bg-muted" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Phone</Label>
-                    <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                    <Input value={form.phone} readOnly disabled className="bg-muted" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Business Account</Label>
