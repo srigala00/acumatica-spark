@@ -104,11 +104,16 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Link to="/orders" className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/cart" className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors relative">
                   <ShoppingCart className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                   <div className="text-left">
-                    <span className="text-xs block">Quotation</span>
-                    <span className="text-sm font-medium block">My Orders</span>
+                    <span className="text-xs block">Cart</span>
+                    <span className="text-sm font-medium block">{cartCount} Items</span>
                   </div>
                 </Link>
               </>
