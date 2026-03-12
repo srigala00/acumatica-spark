@@ -134,6 +134,7 @@ const AdminUsers = () => {
         business_account: editForm.business_account || null,
         location: editForm.location || null,
         unit: editForm.unit || null,
+        company_name: editForm.company_name || null,
       };
       if (isSuperAdmin && editForm.role && editForm.role !== editUser.roles?.[0]) {
         body.role = editForm.role;
