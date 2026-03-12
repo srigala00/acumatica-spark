@@ -354,21 +354,40 @@ const AdminOrders = () => {
                       <TableHead>Inventory ID</TableHead>
                       <TableHead>Spec</TableHead>
                       <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Unit Price</TableHead>
+                      <TableHead className="text-right">Ext. Price</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(selectedOrder.request_items as any[])?.map((item: any, idx: number) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                        <TableCell className="font-medium">{item.product_name}</TableCell>
-                        <TableCell className="font-mono text-xs">{item.sku || '-'}</TableCell>
-                        <TableCell className="font-mono text-xs">{item.inventory_id || '-'}</TableCell>
-                        <TableCell className="text-xs">{item.specification || '-'}</TableCell>
-                        <TableCell className="text-right font-medium">{item.quantity}</TableCell>
-                      </TableRow>
-                    ))}
+                    {(selectedOrder.request_items as any[])?.map((item: any, idx: number) => {
+                      const price = products?.find(p => p.id === item.product_id)?.estimated_price;
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                          <TableCell className="font-medium">{item.product_name}</TableCell>
+                          <TableCell className="font-mono text-xs">{item.sku || '-'}</TableCell>
+                          <TableCell className="font-mono text-xs">{item.inventory_id || '-'}</TableCell>
+                          <TableCell className="text-xs">{item.specification || '-'}</TableCell>
+                          <TableCell className="text-right font-medium">{item.quantity}</TableCell>
+                          <TableCell className="text-right text-sm">{price ? formatPrice(price) : '-'}</TableCell>
+                          <TableCell className="text-right font-medium">{price ? formatPrice(price * item.quantity) : '-'}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
+                {(() => {
+                  const items = (selectedOrder.request_items as any[]) || [];
+                  const total = items.reduce((sum: number, item: any) => {
+                    const price = products?.find(p => p.id === item.product_id)?.estimated_price;
+                    return sum + (price ? price * item.quantity : 0);
+                  }, 0);
+                  return total > 0 ? (
+                    <div className="flex justify-end mt-3 pt-3 border-t border-border">
+                      <div className="text-sm font-semibold">Total Estimated: <span className="text-primary">{formatPrice(total)}</span></div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </>
           )}
