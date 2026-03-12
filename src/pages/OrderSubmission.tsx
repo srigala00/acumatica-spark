@@ -116,6 +116,7 @@ const OrderSubmission = () => {
       sku: i.sku || null,
       quantity: i.quantity,
       specification: i.specification || null,
+      unit_price: i.product_id ? (products?.find(p => p.id === i.product_id)?.estimated_price || null) : null,
     }));
 
     await supabase.from('request_items').insert(itemsToInsert);
