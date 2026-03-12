@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,16 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package, ArrowLeft, ShoppingCart } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Input } from '@/components/ui/input';
+import { Package, ArrowLeft, ShoppingCart, Minus, Plus, Check } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -54,6 +58,19 @@ const ProductDetail = () => {
   }
 
   const specs = product.specifications as Record<string, string> | null;
+
+  const handleAddToCart = () => {
+    addToCart({
+      product_id: product.id,
+      name: product.name,
+      sku: product.sku,
+      brand: product.brand,
+      image_url: product.image_url,
+      estimated_price: product.estimated_price,
+    }, quantity);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   return (
     <PublicLayout>
@@ -123,15 +140,35 @@ const ProductDetail = () => {
               </Card>
             )}
 
-            <Button size="lg" className="w-full sm:w-auto" onClick={() => {
-              if (!user) {
-                navigate('/login');
-              } else {
-                navigate(`/order?product=${product.id}`);
-              }
-            }}>
-              <ShoppingCart className="h-4 w-4 mr-2" /> Order Now
-            </Button>
+            {/* Quantity Selector */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm font-medium">Quantity:</span>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1}>
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-20 h-9 text-center"
+                />
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setQuantity(q => q + 1)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button size="lg" className="flex-1" onClick={handleAddToCart} disabled={added}>
+                {added ? <Check className="h-4 w-4 mr-2" /> : <ShoppingCart className="h-4 w-4 mr-2" />}
+                {added ? 'Added to Cart!' : 'Add to Cart'}
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => { handleAddToCart(); navigate('/cart'); }}>
+                Buy Now
+              </Button>
+            </div>
           </div>
         </div>
       </div>

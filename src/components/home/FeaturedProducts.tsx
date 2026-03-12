@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, Package } from 'lucide-react';
+import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
@@ -24,6 +25,7 @@ const stockLabels: Record<string, string> = {
 };
 
 const FeaturedProducts = () => {
+  const { addToCart } = useCart();
   const { data: products, isLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
@@ -69,31 +71,49 @@ const FeaturedProducts = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {products?.map((product) => (
-            <Link key={product.id} to={`/products/${product.id}`}>
-              <Card className="group hover:shadow-lg transition-all duration-200 overflow-hidden h-full">
-                <div className="aspect-square bg-muted flex items-center justify-center relative overflow-hidden">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="object-cover w-full h-full" />
-                  ) : (
-                    <Package className="h-16 w-16 text-muted-foreground/30" />
-                  )}
-                  <Badge className={`absolute top-3 right-3 text-xs ${stockColors[product.stock_indicator || 'available']}`} variant="outline">
-                    {stockLabels[product.stock_indicator || 'available']}
-                  </Badge>
-                </div>
-                <CardContent className="p-4">
-                  <p className="text-xs text-primary font-medium mb-1">{product.brand}</p>
-                  <h3 className="font-semibold text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
-                  <p className="text-xs text-muted-foreground mb-2">SKU: {product.sku}</p>
-                  {product.estimated_price && (
-                    <p className="font-display font-bold text-primary">{formatPrice(product.estimated_price)}</p>
-                  )}
-                  {!product.estimated_price && (
-                    <p className="text-sm text-muted-foreground italic">Request for price</p>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
+            <div key={product.id} className="relative group">
+              <Link to={`/products/${product.id}`}>
+                <Card className="hover:shadow-lg transition-all duration-200 overflow-hidden h-full">
+                  <div className="aspect-square bg-muted flex items-center justify-center relative overflow-hidden">
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.name} className="object-cover w-full h-full" />
+                    ) : (
+                      <Package className="h-16 w-16 text-muted-foreground/30" />
+                    )}
+                    <Badge className={`absolute top-3 right-3 text-xs ${stockColors[product.stock_indicator || 'available']}`} variant="outline">
+                      {stockLabels[product.stock_indicator || 'available']}
+                    </Badge>
+                  </div>
+                  <CardContent className="p-4">
+                    <p className="text-xs text-primary font-medium mb-1">{product.brand}</p>
+                    <h3 className="font-semibold text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-2">SKU: {product.sku}</p>
+                    {product.estimated_price ? (
+                      <p className="font-display font-bold text-primary">{formatPrice(product.estimated_price)}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">Request for price</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
+              <Button
+                size="icon"
+                className="absolute bottom-3 right-3 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                onClick={(e) => {
+                  e.preventDefault();
+                  addToCart({
+                    product_id: product.id,
+                    name: product.name,
+                    sku: product.sku,
+                    brand: product.brand,
+                    image_url: product.image_url,
+                    estimated_price: product.estimated_price,
+                  });
+                }}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            </div>
           ))}
         </div>
       </div>

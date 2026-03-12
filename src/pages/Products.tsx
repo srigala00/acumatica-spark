@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Package, Filter, X } from 'lucide-react';
+import { Search, Package, Filter, X, ShoppingCart } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
@@ -24,6 +25,7 @@ const stockLabels: Record<string, string> = {
 };
 
 const Products = () => {
+  const { addToCart } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get('category') || '';
   const searchQuery = searchParams.get('search') || '';
@@ -159,8 +161,9 @@ const Products = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {products?.map(product => (
-                  <Link key={product.id} to={`/products/${product.id}`}>
-                    <Card className="group hover:shadow-lg transition-all duration-200 overflow-hidden h-full">
+                    <div key={product.id} className="relative group">
+                    <Link to={`/products/${product.id}`}>
+                    <Card className="hover:shadow-lg transition-all duration-200 overflow-hidden h-full">
                       <div className="aspect-[4/3] bg-muted flex items-center justify-center relative">
                         {product.image_url ? (
                           <img src={product.image_url} alt={product.name} className="object-cover w-full h-full" />
@@ -186,7 +189,25 @@ const Products = () => {
                         )}
                       </CardContent>
                     </Card>
-                  </Link>
+                    </Link>
+                    <Button
+                      size="icon"
+                      className="absolute bottom-3 right-3 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        addToCart({
+                          product_id: product.id,
+                          name: product.name,
+                          sku: product.sku,
+                          brand: product.brand,
+                          image_url: product.image_url,
+                          estimated_price: product.estimated_price,
+                        });
+                      }}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             )}

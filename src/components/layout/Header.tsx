@@ -3,6 +3,7 @@ import { Search, Menu, X, User, LogOut, Phone, ShoppingCart } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
 
 const Header = () => {
   const { user, profile, signOut, isAdmin } = useAuth();
+  const { cartCount } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -102,11 +104,16 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Link to="/orders" className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/cart" className="hidden sm:flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors relative">
                   <ShoppingCart className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                   <div className="text-left">
-                    <span className="text-xs block">Quotation</span>
-                    <span className="text-sm font-medium block">My Orders</span>
+                    <span className="text-xs block">Cart</span>
+                    <span className="text-sm font-medium block">{cartCount} Items</span>
                   </div>
                 </Link>
               </>
@@ -135,7 +142,7 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-8 h-12 text-sm font-medium">
             <Link to="/" className="text-foreground hover:text-primary transition-colors">HOME</Link>
             <Link to="/products" className="text-foreground hover:text-primary transition-colors">PRODUCTS</Link>
-            <Link to="/order" className="text-foreground hover:text-primary transition-colors">QUOTATION</Link>
+            <Link to="/cart" className="text-foreground hover:text-primary transition-colors">CART</Link>
             <Link to="/about" className="text-foreground hover:text-primary transition-colors">ABOUT US</Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">CONTACT US</Link>
           </div>
@@ -159,7 +166,7 @@ const Header = () => {
             <div className="flex flex-col gap-1">
               <Link to="/" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>HOME</Link>
               <Link to="/products" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>PRODUCTS</Link>
-              <Link to="/order" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>QUOTATION</Link>
+              <Link to="/cart" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>CART</Link>
               <Link to="/about" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>ABOUT US</Link>
               <Link to="/contact" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>CONTACT US</Link>
             </div>
