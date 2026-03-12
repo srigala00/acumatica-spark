@@ -33,15 +33,28 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (profile) setForm(prev => ({
-      ...prev,
-      contactPerson: profile.full_name,
-      phone: profile.phone || '',
-      businessAccount: profile.business_account || '',
-      companyName: profile.company_name || '',
-    }));
-    if (user) setForm(prev => ({ ...prev, email: user.email || '' }));
-  }, [profile, user]);
+    const fetchProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, phone, business_account, company_name')
+        .eq('user_id', user.id)
+        .single();
+      if (data) {
+        setForm(prev => ({
+          ...prev,
+          contactPerson: data.full_name || '',
+          phone: data.phone || '',
+          businessAccount: data.business_account || '',
+          companyName: data.company_name || '',
+          email: user.email || '',
+        }));
+      } else {
+        setForm(prev => ({ ...prev, email: user.email || '' }));
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   const estimatedTotal = items.reduce((sum, i) => sum + (i.estimated_price || 0) * i.quantity, 0);
 
