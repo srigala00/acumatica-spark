@@ -91,7 +91,7 @@ const AdminUsers = () => {
           email: form.email, password: form.password, full_name: form.full_name,
           phone: form.phone || null, role: form.role,
           business_account: form.business_account || null, location: form.location || null,
-          unit: form.unit || null,
+          unit: form.unit || null, company_name: form.company_name || null,
         },
       });
       if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
