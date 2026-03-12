@@ -53,6 +53,19 @@ const Cart = () => {
     }
     setLoading(true);
 
+    // Fetch inventory_id for each cart item from products table
+    const productIds = items.map(i => i.product_id).filter(Boolean);
+    let inventoryMap: Record<string, string> = {};
+    if (productIds.length > 0) {
+      const { data: prodData } = await supabase
+        .from('products')
+        .select('id, inventory_id')
+        .in('id', productIds);
+      if (prodData) {
+        inventoryMap = Object.fromEntries(prodData.map(p => [p.id, p.inventory_id || '']));
+      }
+    }
+
     const { data: request, error: reqErr } = await supabase
       .from('requests')
       .insert({
@@ -82,9 +95,10 @@ const Cart = () => {
       sku: i.sku || null,
       quantity: i.quantity,
       specification: i.specification || null,
+      inventory_id: inventoryMap[i.product_id] || null,
     }));
 
-    await supabase.from('request_items').insert(itemsToInsert);
+    await supabase.from('request_items').insert(itemsToInsert as any);
 
     clearCart();
     setLoading(false);
@@ -232,7 +246,7 @@ const Cart = () => {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Business Account</Label>
-                    <Input value={form.businessAccount} onChange={(e) => setForm({ ...form, businessAccount: e.target.value })} placeholder="Business account number" />
+                    <Input value={form.businessAccount} readOnly disabled className="bg-muted" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Shipping Address *</Label>
