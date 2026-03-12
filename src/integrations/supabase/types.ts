@@ -212,6 +212,7 @@ export type Database = {
           location: string | null
           phone: string | null
           status: string
+          unit: string | null
           updated_at: string
           user_id: string
         }
@@ -225,6 +226,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           status?: string
+          unit?: string | null
           updated_at?: string
           user_id: string
         }
@@ -238,6 +240,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           status?: string
+          unit?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -255,6 +258,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          inventory_id: string | null
           product_id: string | null
           product_name: string
           quantity: number
@@ -265,6 +269,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          inventory_id?: string | null
           product_id?: string | null
           product_name: string
           quantity?: number
@@ -275,6 +280,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          inventory_id?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
