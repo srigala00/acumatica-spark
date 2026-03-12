@@ -55,10 +55,15 @@ const AdminUsers = () => {
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-      const { data: roles } = await supabase.from('user_roles').select('*');
+      const [{ data: profiles }, { data: roles }, emailsRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('user_roles').select('*'),
+        supabase.functions.invoke('manage-user', { body: { action: 'list_emails' } }),
+      ]);
+      const emailMap: Record<string, string> = emailsRes.data?.emails || {};
       return (profiles || []).map(p => ({
         ...p,
+        email: emailMap[p.user_id] || '',
         roles: (roles || []).filter(r => r.user_id === p.user_id).map(r => r.role),
       }));
     },
