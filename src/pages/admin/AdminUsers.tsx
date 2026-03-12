@@ -26,6 +26,7 @@ interface UserRow {
   role: string;
   business_account: string;
   location: string;
+  unit: string;
 }
 
 const AdminUsers = () => {
@@ -35,7 +36,7 @@ const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '' });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -45,11 +46,10 @@ const AdminUsers = () => {
   const [pendingStatus, setPendingStatus] = useState<Map<string, string>>(new Map());
   const [savingStatus, setSavingStatus] = useState(false);
 
-  // Edit state
   const [editOpen, setEditOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', role: '', email: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', unit: '', role: '', email: '' });
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
@@ -90,12 +90,13 @@ const AdminUsers = () => {
           email: form.email, password: form.password, full_name: form.full_name,
           phone: form.phone || null, role: form.role,
           business_account: form.business_account || null, location: form.location || null,
+          unit: form.unit || null,
         },
       });
       if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
       toast({ title: 'Success', description: 'User created successfully' });
       setOpen(false);
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '' });
+      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '' });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -111,8 +112,9 @@ const AdminUsers = () => {
       phone: user.phone || '',
       business_account: user.business_account || '',
       location: user.location || '',
+      unit: (user as any).unit || '',
       role: user.roles?.[0] || 'buyer',
-      email: '', // not shown unless super_admin
+      email: '',
     });
     setEditOpen(true);
   };
@@ -129,12 +131,11 @@ const AdminUsers = () => {
         phone: editForm.phone || null,
         business_account: editForm.business_account || null,
         location: editForm.location || null,
+        unit: editForm.unit || null,
       };
-      // Only super_admin can change role
       if (isSuperAdmin && editForm.role && editForm.role !== editUser.roles?.[0]) {
         body.role = editForm.role;
       }
-      // Both super_admin and sales can change email
       if (editForm.email) {
         body.email = editForm.email;
       }
@@ -206,7 +207,7 @@ const AdminUsers = () => {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location']]);
+    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location', 'unit']]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Users');
     XLSX.writeFile(wb, 'user_import_template.xlsx');
@@ -228,6 +229,7 @@ const AdminUsers = () => {
         role: String(r.role || 'buyer').trim(),
         business_account: String(r.business_account || '').trim(),
         location: String(r.location || '').trim(),
+        unit: String(r.unit || '').trim(),
       })));
     };
     reader.readAsBinaryString(file);
@@ -246,6 +248,7 @@ const AdminUsers = () => {
             email: row.email, password: row.password, full_name: row.full_name,
             phone: row.phone || null, role: row.role,
             business_account: row.business_account || null, location: row.location || null,
+            unit: row.unit || null,
           },
         });
         if (res.error || res.data?.error) throw new Error('fail');
@@ -324,6 +327,10 @@ const AdminUsers = () => {
                     <Label htmlFor="location">Location</Label>
                     <Input id="location" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="User location" />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit">Unit</Label>
+                    <Input id="unit" value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} placeholder="Unit / department" />
+                  </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Creating...' : 'Create User'}
                   </Button>
@@ -365,6 +372,7 @@ const AdminUsers = () => {
                   </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Unit</TableHead>
                   <TableHead>Business Account</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
@@ -384,6 +392,7 @@ const AdminUsers = () => {
                       </TableCell>
                       <TableCell className="font-medium">{u.full_name}</TableCell>
                       <TableCell>{u.phone || '-'}</TableCell>
+                      <TableCell className="text-sm">{(u as any).unit || '-'}</TableCell>
                       <TableCell className="text-sm">{u.business_account || '-'}</TableCell>
                       <TableCell className="text-sm">{u.location || '-'}</TableCell>
                       <TableCell>
@@ -431,6 +440,10 @@ const AdminUsers = () => {
               <div className="space-y-2">
                 <Label>Phone</Label>
                 <Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Unit</Label>
+                <Input value={editForm.unit} onChange={e => setEditForm(f => ({ ...f, unit: e.target.value }))} placeholder="Unit / department" />
               </div>
               <div className="space-y-2">
                 <Label>Business Account</Label>
@@ -481,7 +494,7 @@ const AdminUsers = () => {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Import Users</DialogTitle>
-              <DialogDescription>Upload an Excel file with columns: full_name, email, phone, password, role, business_account, location</DialogDescription>
+              <DialogDescription>Upload an Excel file with columns: full_name, email, phone, password, role, business_account, location, unit</DialogDescription>
             </DialogHeader>
             {importData.length === 0 ? (
               <div className="space-y-4">
@@ -500,6 +513,7 @@ const AdminUsers = () => {
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Unit</TableHead>
                         <TableHead>Biz Account</TableHead>
                         <TableHead>Location</TableHead>
                       </TableRow>
@@ -511,6 +525,7 @@ const AdminUsers = () => {
                           <TableCell>{r.email}</TableCell>
                           <TableCell>{r.phone}</TableCell>
                           <TableCell>{r.role}</TableCell>
+                          <TableCell>{r.unit}</TableCell>
                           <TableCell>{r.business_account}</TableCell>
                           <TableCell>{r.location}</TableCell>
                         </TableRow>
