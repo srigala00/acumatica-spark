@@ -51,7 +51,7 @@ const AdminOrders = () => {
 
   // Add item state
   const [showAddItem, setShowAddItem] = useState(false);
-  const [newItem, setNewItem] = useState({ product_id: '', product_name: '', sku: '', quantity: 1, specification: '', inventory_id: '' });
+  const [newItem, setNewItem] = useState({ product_id: '', product_name: '', sku: '', quantity: 1, specification: '', inventory_id: '', unit_price: '' as string });
 
   const { data: orders } = useQuery({
     queryKey: ['admin-all-orders'],
