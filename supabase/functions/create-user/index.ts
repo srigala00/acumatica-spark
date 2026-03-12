@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, full_name, phone, role, business_account, location, unit } = await req.json();
+    const { email, password, full_name, phone, role, business_account, location, unit, company_name } = await req.json();
 
     if (!email || !password || !full_name || !role) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
     if (business_account) profileUpdate.business_account = business_account;
     if (location) profileUpdate.location = location;
     if (unit) profileUpdate.unit = unit;
+    if (company_name) profileUpdate.company_name = company_name;
 
     if (Object.keys(profileUpdate).length > 0) {
       await adminClient

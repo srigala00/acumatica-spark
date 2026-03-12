@@ -27,6 +27,7 @@ interface UserRow {
   business_account: string;
   location: string;
   unit: string;
+  company_name: string;
 }
 
 const AdminUsers = () => {
@@ -36,7 +37,7 @@ const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '', company_name: '' });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -49,7 +50,7 @@ const AdminUsers = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', unit: '', role: '', email: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', unit: '', role: '', email: '', company_name: '' });
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
@@ -90,13 +91,13 @@ const AdminUsers = () => {
           email: form.email, password: form.password, full_name: form.full_name,
           phone: form.phone || null, role: form.role,
           business_account: form.business_account || null, location: form.location || null,
-          unit: form.unit || null,
+          unit: form.unit || null, company_name: form.company_name || null,
         },
       });
       if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || 'Failed');
       toast({ title: 'Success', description: 'User created successfully' });
       setOpen(false);
-      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '' });
+      setForm({ full_name: '', email: '', phone: '', password: '', role: 'buyer', business_account: '', location: '', unit: '', company_name: '' });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -115,6 +116,7 @@ const AdminUsers = () => {
       unit: (user as any).unit || '',
       role: user.roles?.[0] || 'buyer',
       email: '',
+      company_name: (user as any).company_name || '',
     });
     setEditOpen(true);
   };
@@ -132,6 +134,7 @@ const AdminUsers = () => {
         business_account: editForm.business_account || null,
         location: editForm.location || null,
         unit: editForm.unit || null,
+        company_name: editForm.company_name || null,
       };
       if (isSuperAdmin && editForm.role && editForm.role !== editUser.roles?.[0]) {
         body.role = editForm.role;
@@ -207,7 +210,7 @@ const AdminUsers = () => {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location', 'unit']]);
+    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location', 'unit', 'company_name']]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Users');
     XLSX.writeFile(wb, 'user_import_template.xlsx');
@@ -230,6 +233,7 @@ const AdminUsers = () => {
         business_account: String(r.business_account || '').trim(),
         location: String(r.location || '').trim(),
         unit: String(r.unit || '').trim(),
+        company_name: String((r as any).company_name || '').trim(),
       })));
     };
     reader.readAsBinaryString(file);
@@ -248,7 +252,7 @@ const AdminUsers = () => {
             email: row.email, password: row.password, full_name: row.full_name,
             phone: row.phone || null, role: row.role,
             business_account: row.business_account || null, location: row.location || null,
-            unit: row.unit || null,
+            unit: row.unit || null, company_name: row.company_name || null,
           },
         });
         if (res.error || res.data?.error) throw new Error('fail');
@@ -320,6 +324,10 @@ const AdminUsers = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="company_name">Company Name</Label>
+                    <Input id="company_name" value={form.company_name} onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))} placeholder="Company name" />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="business_account">Business Account</Label>
                     <Input id="business_account" value={form.business_account} onChange={e => setForm(f => ({ ...f, business_account: e.target.value }))} placeholder="Business account identifier" />
                   </div>
@@ -371,6 +379,7 @@ const AdminUsers = () => {
                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
                   </TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>Company</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Business Account</TableHead>
@@ -391,6 +400,7 @@ const AdminUsers = () => {
                         <Checkbox checked={selectedIds.includes(u.user_id)} onCheckedChange={() => toggleSelect(u.user_id)} />
                       </TableCell>
                       <TableCell className="font-medium">{u.full_name}</TableCell>
+                      <TableCell className="text-sm">{(u as any).company_name || '-'}</TableCell>
                       <TableCell>{u.phone || '-'}</TableCell>
                       <TableCell className="text-sm">{(u as any).unit || '-'}</TableCell>
                       <TableCell className="text-sm">{u.business_account || '-'}</TableCell>
@@ -444,6 +454,10 @@ const AdminUsers = () => {
               <div className="space-y-2">
                 <Label>Unit</Label>
                 <Input value={editForm.unit} onChange={e => setEditForm(f => ({ ...f, unit: e.target.value }))} placeholder="Unit / department" />
+              </div>
+              <div className="space-y-2">
+                <Label>Company Name</Label>
+                <Input value={editForm.company_name} onChange={e => setEditForm(f => ({ ...f, company_name: e.target.value }))} placeholder="Company name" />
               </div>
               <div className="space-y-2">
                 <Label>Business Account</Label>
