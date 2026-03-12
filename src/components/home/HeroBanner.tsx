@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const HeroBanner = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -26,7 +26,6 @@ const HeroBanner = () => {
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium mb-6">
             <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-            Trusted by 660000+ Industrial Companies
           </div>
 
           <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
@@ -46,7 +45,7 @@ const HeroBanner = () => {
                 className="pl-11 h-12 text-base"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
             <Button size="lg" className="h-12 px-8" asChild>
