@@ -268,6 +268,7 @@ export type Database = {
           request_id: string
           sku: string | null
           specification: string | null
+          unit_price: number | null
         }
         Insert: {
           created_at?: string
@@ -279,6 +280,7 @@ export type Database = {
           request_id: string
           sku?: string | null
           specification?: string | null
+          unit_price?: number | null
         }
         Update: {
           created_at?: string
@@ -290,6 +292,7 @@ export type Database = {
           request_id?: string
           sku?: string | null
           specification?: string | null
+          unit_price?: number | null
         }
         Relationships: [
           {
