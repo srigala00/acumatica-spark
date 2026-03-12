@@ -37,7 +37,7 @@ const Cart = () => {
       ...prev,
       contactPerson: profile.full_name,
       phone: profile.phone || '',
-      businessAccount: (profile as any).business_account || '',
+      businessAccount: profile.business_account || '',
     }));
     if (user) setForm(prev => ({ ...prev, email: user.email || '' }));
   }, [profile, user]);

@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   roles: AppRole[];
-  profile: { full_name: string; phone: string | null; company_id: string | null; avatar_url: string | null } | null;
+  profile: { full_name: string; phone: string | null; company_id: string | null; avatar_url: string | null; business_account: string | null } | null;
   loading: boolean;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserData = async (userId: string) => {
     const [rolesRes, profileRes] = await Promise.all([
       supabase.from('user_roles').select('role').eq('user_id', userId),
-      supabase.from('profiles').select('full_name, phone, company_id, avatar_url').eq('user_id', userId).single(),
+      supabase.from('profiles').select('full_name, phone, company_id, avatar_url, business_account').eq('user_id', userId).single(),
     ]);
     if (rolesRes.data) setRoles(rolesRes.data.map(r => r.role as AppRole));
     if (profileRes.data) setProfile(profileRes.data);
