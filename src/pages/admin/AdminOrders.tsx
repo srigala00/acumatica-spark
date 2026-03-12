@@ -58,7 +58,7 @@ const AdminOrders = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('requests')
-        .select('*, request_items(id, product_name, quantity, sku, specification, product_id, inventory_id)')
+        .select('*, request_items(id, product_name, quantity, sku, specification, product_id, inventory_id, unit_price)')
         .order('created_at', { ascending: false });
       return data || [];
     },
