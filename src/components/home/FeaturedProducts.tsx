@@ -25,6 +25,7 @@ const stockLabels: Record<string, string> = {
 };
 
 const FeaturedProducts = () => {
+  const { addToCart } = useCart();
   const { data: products, isLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
