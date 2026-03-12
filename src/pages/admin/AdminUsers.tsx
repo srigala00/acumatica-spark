@@ -50,7 +50,7 @@ const AdminUsers = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', unit: '', role: '', email: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', business_account: '', location: '', unit: '', role: '', email: '', company_name: '' });
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
