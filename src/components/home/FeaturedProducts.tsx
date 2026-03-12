@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, Package } from 'lucide-react';
+import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
