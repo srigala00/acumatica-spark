@@ -210,7 +210,7 @@ const AdminUsers = () => {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location', 'unit']]);
+    const ws = XLSX.utils.aoa_to_sheet([['full_name', 'email', 'phone', 'password', 'role', 'business_account', 'location', 'unit', 'company_name']]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Users');
     XLSX.writeFile(wb, 'user_import_template.xlsx');
