@@ -110,6 +110,7 @@ const Cart = () => {
       quantity: i.quantity,
       specification: i.specification || null,
       inventory_id: inventoryMap[i.product_id] || null,
+      unit_price: i.estimated_price || null,
     }));
 
     await supabase.from('request_items').insert(itemsToInsert as any);

@@ -1,0 +1,1 @@
+ALTER TABLE public.request_items ADD COLUMN unit_price numeric NULL DEFAULT NULL;
