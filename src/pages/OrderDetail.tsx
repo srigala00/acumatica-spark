@@ -31,11 +31,20 @@ const OrderDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('requests')
-        .select('*, request_items(id, product_name, quantity, sku, specification)')
+        .select('*, request_items(id, product_name, quantity, sku, specification, product_id)')
         .eq('id', id!)
         .single();
       if (error) throw error;
-      return data;
+
+      // Fetch prices for items with product_id
+      const productIds = (data.request_items as any[])?.map((i: any) => i.product_id).filter(Boolean) || [];
+      let priceMap: Record<string, number> = {};
+      if (productIds.length > 0) {
+        const { data: prods } = await supabase.from('products').select('id, estimated_price').in('id', productIds);
+        prods?.forEach(p => { if (p.estimated_price) priceMap[p.id] = p.estimated_price; });
+      }
+
+      return { ...data, _priceMap: priceMap };
     },
     enabled: !!id && !!user,
   });

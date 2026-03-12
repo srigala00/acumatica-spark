@@ -37,6 +37,8 @@ const statusLabels: Record<string, string> = {
   closed: 'Closed',
 };
 
+const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+
 const AdminOrders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
