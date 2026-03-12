@@ -379,6 +379,7 @@ const AdminUsers = () => {
                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
                   </TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>Company</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Business Account</TableHead>
