@@ -194,20 +194,32 @@ const OrderDetail = () => {
                   <TableHead>SKU</TableHead>
                   <TableHead>Specification</TableHead>
                   <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Unit Price</TableHead>
+                  <TableHead className="text-right">Ext. Price</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item: any, idx: number) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                    <TableCell className="font-medium">{item.product_name}</TableCell>
-                    <TableCell className="font-mono text-sm">{item.sku || '-'}</TableCell>
-                    <TableCell className="text-sm">{item.specification || '-'}</TableCell>
-                    <TableCell className="text-right font-medium">{item.quantity}</TableCell>
-                  </TableRow>
-                ))}
+                {items.map((item: any, idx: number) => {
+                  const unitPrice = priceMap[item.product_id];
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="font-medium">{item.product_name}</TableCell>
+                      <TableCell className="font-mono text-sm">{item.sku || '-'}</TableCell>
+                      <TableCell className="text-sm">{item.specification || '-'}</TableCell>
+                      <TableCell className="text-right font-medium">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-sm">{unitPrice ? formatPrice(unitPrice) : '-'}</TableCell>
+                      <TableCell className="text-right font-medium">{unitPrice ? formatPrice(unitPrice * item.quantity) : '-'}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
+            {totalEstimated > 0 && (
+              <div className="flex justify-end px-4 py-3 border-t border-border">
+                <div className="text-sm font-semibold">Total Estimated: <span className="text-primary">{formatPrice(totalEstimated)}</span></div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
