@@ -166,7 +166,7 @@ const Header = () => {
             <div className="flex flex-col gap-1">
               <Link to="/" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>HOME</Link>
               <Link to="/products" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>PRODUCTS</Link>
-              <Link to="/order" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>QUOTATION</Link>
+              <Link to="/cart" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>CART</Link>
               <Link to="/about" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>ABOUT US</Link>
               <Link to="/contact" className="px-3 py-2 rounded-md hover:bg-muted text-sm font-medium" onClick={() => setMobileOpen(false)}>CONTACT US</Link>
             </div>
