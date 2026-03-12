@@ -33,6 +33,8 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log('Cart profile data:', profile);
+    console.log('Cart user data:', user);
     if (profile) setForm(prev => ({
       ...prev,
       contactPerson: profile.full_name,
