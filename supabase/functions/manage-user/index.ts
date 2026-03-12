@@ -60,6 +60,18 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, user_id, user_ids, status } = body;
 
+    if (action === "list_emails") {
+      const { data: { users: authUsers }, error: listErr } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      if (listErr) throw listErr;
+      const emailMap: Record<string, string> = {};
+      for (const u of authUsers) {
+        emailMap[u.id] = u.email || '';
+      }
+      return new Response(JSON.stringify({ emails: emailMap }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "update_status") {
       if (!user_id || !status || !["active", "inactive"].includes(status)) {
         return new Response(JSON.stringify({ error: "Invalid parameters" }), {
