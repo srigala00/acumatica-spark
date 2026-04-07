@@ -11,6 +11,19 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      '/acumatica-api': {
+        target: 'https://erp.plnsc.co.id/PLNSCUpgradeTest',
+        changeOrigin: true,
+        secure: false, // Ignore SSL certificate errors for localhost
+        rewrite: (path) => path.replace(/^\/acumatica-api/, ''),
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('[Proxy] Request:', req.method, req.url);
+          });
+        },
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

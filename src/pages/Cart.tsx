@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Send, ShoppingCart, Minus, Plus, Package, ArrowLeft } from 'lucide-react';
+import { acumaticaService } from '@/services/acumatica';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
@@ -67,58 +68,100 @@ const Cart = () => {
     }
     setLoading(true);
 
-    // Fetch inventory_id for each cart item from products table
-    const productIds = items.map(i => i.product_id).filter(Boolean);
-    let inventoryMap: Record<string, string> = {};
-    if (productIds.length > 0) {
-      const { data: prodData } = await supabase
-        .from('products')
-        .select('id, inventory_id')
-        .in('id', productIds);
-      if (prodData) {
-        inventoryMap = Object.fromEntries(prodData.map(p => [p.id, p.inventory_id || '']));
+    try {
+      // Save to database first
+      const { data: request, error: reqErr } = await supabase
+        .from('requests')
+        .insert({
+          user_id: user.id,
+          company_name: form.companyName,
+          contact_person: form.contactPerson,
+          email: form.email,
+          phone: form.phone,
+          description: form.description,
+          shipping_address: form.shippingAddress,
+          business_account: form.businessAccount,
+          request_number: 'TEMP',
+        } as any)
+        .select()
+        .single();
+
+      if (reqErr || !request) {
+        throw new Error(reqErr?.message || 'Failed to create order');
       }
-    }
 
-    const { data: request, error: reqErr } = await supabase
-      .from('requests')
-      .insert({
-        user_id: user.id,
-        company_name: form.companyName,
-        contact_person: form.contactPerson,
-        email: form.email,
-        phone: form.phone,
-        description: form.description,
-        shipping_address: form.shippingAddress,
-        business_account: form.businessAccount,
-        request_number: 'TEMP',
-      } as any)
-      .select()
-      .single();
+      const itemsToInsert = items.map(i => ({
+        request_id: request.id,
+        product_id: i.product_id || null,
+        product_name: i.name,
+        sku: i.sku || null,
+        quantity: i.quantity,
+        specification: i.specification || null,
+      }));
 
-    if (reqErr || !request) {
-      toast({ title: 'Error', description: reqErr?.message || 'Failed to create order', variant: 'destructive' });
+      await supabase.from('request_items').insert(itemsToInsert as any);
+
+      // Submit to Acumatica
+      try {
+        const acumaticaProducts = items
+          .filter(i => i.sku) // Only items with SKU
+          .map(i => ({
+            inventoryId: i.sku!, // Use SKU as inventoryId
+            warehouse: 'PLNSC',
+            qty: i.quantity,
+            manualPrice: true,
+            unitPrice: i.estimated_price || 0, // Use estimated_price as unitPrice
+            description: i.specification || i.name,
+          }));
+
+        if (acumaticaProducts.length > 0) {
+          await acumaticaService.submitOrder(
+            form.businessAccount || 'C00001', // Default business account if not provided
+            `SCMart Order - ${request.request_number}`,
+            acumaticaProducts,
+            {
+              preDoNbr: 'Dikirim dari API SCMart',
+            }
+          );
+
+          // Update request status to 'sent_to_erp'
+          await supabase
+            .from('requests')
+            .update({ status: 'sent_to_erp' })
+            .eq('id', request.id);
+
+          toast({
+            title: 'Order Submitted to Acumatica!',
+            description: `Order ${request.request_number} has been submitted successfully.`
+          });
+        } else {
+          toast({
+            title: 'Order Saved!',
+            description: `Order ${request.request_number} saved but could not be sent to Acumatica (missing inventory IDs).`,
+            variant: 'default'
+          });
+        }
+      } catch (acumaticaError: any) {
+        console.error('Acumatica error:', acumaticaError);
+        // Order is saved in database, but failed to submit to Acumatica
+        toast({
+          title: 'Order Saved with Warning',
+          description: `Order ${request.request_number} saved but failed to sync with Acumatica: ${acumaticaError.message}`,
+          variant: 'default'
+        });
+      }
+
+      clearCart();
+      navigate('/orders');
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to submit order',
+        variant: 'destructive'
+      });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const itemsToInsert = items.map(i => ({
-      request_id: request.id,
-      product_id: i.product_id || null,
-      product_name: i.name,
-      sku: i.sku || null,
-      quantity: i.quantity,
-      specification: i.specification || null,
-      inventory_id: inventoryMap[i.product_id] || null,
-      unit_price: i.estimated_price || null,
-    }));
-
-    await supabase.from('request_items').insert(itemsToInsert as any);
-
-    clearCart();
-    setLoading(false);
-    toast({ title: 'Order Submitted!', description: `Your order ${request.request_number} has been submitted successfully.` });
-    navigate('/orders');
   };
 
   if (items.length === 0) {
