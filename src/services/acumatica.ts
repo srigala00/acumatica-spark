@@ -1,9 +1,11 @@
 // Acumatica API Integration Service
 
-// Use Vite proxy in development to avoid CORS issues
+// Use proxy to avoid CORS issues
+// - DEV: Use Vite proxy (/acumatica-api)
+// - PROD: Use Vercel Serverless Function
 const ACUMATICA_BASE_URL = import.meta.env.DEV
   ? '/acumatica-api/entity'
-  : 'https://erp.plnsc.co.id/PLNSCUpgradeTest/entity';
+  : '/api/acumatica-proxy/entity';
 
 interface AcumaticaLoginResponse {
   access_token?: string;
